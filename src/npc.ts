@@ -72,6 +72,8 @@ export class Npc {
   /** 自分の当たり判定(毎フレーム現在地に追従させる) */
   private readonly collider: SurfaceCollider;
   private readonly desiredQuat = new THREE.Quaternion();
+  /** つぶやきの吹き出しを出す高さ(頭の少し上。体型で変わる) */
+  private readonly bubbleHeight: number;
 
   constructor(homeDirection: THREE.Vector3, rand: Rand) {
     this.rand = rand;
@@ -80,6 +82,7 @@ export class Npc {
     const character = buildVillager(rand);
     this.body = character.root;
     this.limbs = character.limbs;
+    this.bubbleHeight = this.body.scale.y * 1.5;
     this.mesh = new THREE.Group();
     this.mesh.add(this.body);
     this.mesh.position.copy(this.home).multiplyScalar(PLANET_RADIUS);
@@ -95,6 +98,17 @@ export class Npc {
     this.idleTimer = 1 + rand() * 3;
     this.lookAroundTimer = 1.5 + rand() * 2.5;
     this.collider = addCollider(this.home, 0.4);
+  }
+
+  /**
+   * つぶやきの吹き出しのワールド座標(頭の少し上)。out に書き込んで返す。
+   * 足元は球面上にあるので、法線方向へ持ち上げるだけでよい
+   */
+  getBubbleAnchor(out: THREE.Vector3): THREE.Vector3 {
+    return out
+      .copy(this.mesh.position)
+      .normalize()
+      .multiplyScalar(PLANET_RADIUS + this.bubbleHeight);
   }
 
   /** 指定した接線方向を向くよう desiredQuat を更新する */

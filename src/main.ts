@@ -1,10 +1,13 @@
 import * as THREE from 'three';
 import './style.css';
-import { createWorld, enableShadows } from './world.ts';
+import { createWorld, enableShadows, getSunElevation } from './world.ts';
 import { PALETTE } from './palette.ts';
 import { Player, type PlayerInput } from './player.ts';
 import { FollowCamera } from './camera.ts';
 import { createEffects } from './effects.ts';
+import { SpeechBubbles } from './dialogue.ts';
+import { createJournal } from './journal.ts';
+import { createAmbientAudio } from './audio.ts';
 
 // --- レンダラーとシーン ---
 const canvas = document.querySelector<HTMLCanvasElement>('#app')!;
@@ -43,8 +46,8 @@ renderer.shadowMap.type = THREE.PCFShadowMap; // 縁の柔らかい影
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(PALETTE.sky);
 
-// 動く世界(太陽・煙・光の粒・草・雲・蝶・流れ星)の更新関数を受け取る
-const updateWorld = createWorld(scene);
+// 動く世界の更新関数と、つぶやき・図鑑が使う参照(村人・薬草)を受け取る
+const world = createWorld(scene);
 
 const player = new Player();
 enableShadows(player.mesh); // プレイヤーも影を落とす
@@ -55,6 +58,11 @@ const followCamera = new FollowCamera(window.innerWidth / window.innerHeight, ca
 
 // ポストプロセス(輪郭線・ブルーム・ビネット)
 const effects = createEffects(renderer, scene, followCamera.camera);
+
+// 村人のつぶやき・薬草図鑑・環境音
+const speechBubbles = new SpeechBubbles(world.npcs, followCamera.camera);
+const journal = createJournal(world.herbSightings);
+const ambientAudio = createAmbientAudio();
 
 // --- キー入力 ---
 const pressed = new Set<string>();
@@ -160,6 +168,7 @@ if (import.meta.env.DEV) {
 // --- メインループ ---
 const timer = new THREE.Timer();
 const cameraDirection = new THREE.Vector3(); // カメラの「画面の奥」方向(使い回し)
+const playerDirection = new THREE.Vector3(); // プレイヤーの球面法線(使い回し)
 
 renderer.setAnimationLoop(() => {
   timer.update();
@@ -168,10 +177,18 @@ renderer.setAnimationLoop(() => {
   const deltaTime = Math.min(timer.getDelta(), 0.1);
 
   // カメラ相対移動:前フレームのカメラの視線方向を基準に入力を解釈する
-  player.update(deltaTime, readInput(), followCamera.getViewDirection(cameraDirection));
+  const input = readInput();
+  player.update(deltaTime, input, followCamera.getViewDirection(cameraDirection));
   followCamera.update(deltaTime, player);
   // プレイヤー位置は、遠くのNPC・動物を止める距離カリングに使う
-  updateWorld(timer.getElapsed(), player.mesh.position);
+  world.update(timer.getElapsed(), player.mesh.position);
+
+  // つぶやき・図鑑・環境音は、プレイヤー地点の昼夜に合わせて動く
+  playerDirection.copy(player.mesh.position).normalize();
+  const sunElevation = getSunElevation(playerDirection);
+  speechBubbles.update(deltaTime, player.mesh.position, sunElevation);
+  journal.update(deltaTime, playerDirection);
+  ambientAudio.update(deltaTime, input.x !== 0 || input.z !== 0, sunElevation);
 
   effects.render(); // ポストプロセス込みで描画する
 });

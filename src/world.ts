@@ -44,10 +44,26 @@ import {
   yawTowards,
 } from './town.ts';
 
+import type { HerbSighting } from './journal.ts';
+
 // player.ts / camera.ts が参照している定数をそのまま提供する
 export { PLANET_RADIUS } from './palette.ts';
 
 type Rand = () => number;
+
+/**
+ * 図鑑に記録する薬草の種類(ファクトリ→種類ID)。
+ * 表示名や説明文は journal.ts の HERB_SPECIES が持つ
+ */
+const HERB_SPECIES_ID = new Map<(rand: Rand) => THREE.Group, string>([
+  [createRoundLeafHerb, 'roundleaf'],
+  [createStarFlowerHerb, 'starflower'],
+  [createGlowHerb, 'glow'],
+  [createBerryHerb, 'berry'],
+  [createSmallFlower, 'smallflower'],
+  [createRosetteHerb, 'rosette'],
+  [createBudHerb, 'bud'],
+]);
 
 /** 再現性のある簡易乱数(毎回同じ配置になるようにする) */
 function createRandom(seed: number): Rand {
@@ -297,14 +313,30 @@ const DAY_LENGTH = 240;
 const _playerDirection = new THREE.Vector3();
 
 /**
+ * その方向での太陽の高さ(1=真昼、0=地平線、-1=真夜中)。
+ * つぶやきのセリフや環境音など、昼夜で変わる演出が使う
+ */
+export function getSunElevation(direction: THREE.Vector3): number {
+  return SUN_DIRECTION.dot(direction);
+}
+
+/** createWorld の戻り値。update のほかに、つぶやき・図鑑が使う参照を持つ */
+export interface World {
+  /** 「動く世界」を毎フレーム進める(playerPositionは距離カリングに使う) */
+  update: (time: number, playerPosition: THREE.Vector3) => void;
+  /** 村人(つぶやきの吹き出しが頭上の位置を参照する) */
+  npcs: readonly Npc[];
+  /** 星に生えている薬草の方向と種類(図鑑の発見判定に使う) */
+  herbSightings: readonly HerbSighting[];
+}
+
+/**
  * 惑星・薬草・木・薬屋・星空・照明をまとめてシーンに追加する。
- * 戻り値は「動く世界」(太陽・煙・光の粒・草・雲・NPC・動物・蝶・流れ星)を
- * 毎フレーム進める更新関数。playerPosition は、遠くのNPC・動物の
+ * 戻り値の update は「動く世界」(太陽・煙・光の粒・草・雲・NPC・動物・蝶・流れ星)を
+ * 毎フレーム進める。playerPosition は、遠くのNPC・動物の
  * 描画とAIを止める距離カリングに使う。
  */
-export function createWorld(
-  scene: THREE.Scene
-): (time: number, playerPosition: THREE.Vector3) => void {
+export function createWorld(scene: THREE.Scene): World {
   scene.add(createPlanet());
   scene.add(createSky());
   const { sun, fill } = addLights(scene);
@@ -313,12 +345,21 @@ export function createWorld(
   const rand = createRandom(20260714);
   // 光る薬草の位置を集めておき、あとで光の粒を漂わせる
   const glowHerbPositions: THREE.Vector3[] = [];
-  addHerbClusters(scene, rand, glowHerbPositions);
+  // 置いた薬草の方向と種類を集めておき、図鑑の発見判定に渡す
+  const herbSightings: HerbSighting[] = [];
+  addHerbClusters(scene, rand, glowHerbPositions, herbSightings);
   addTrees(scene, rand);
   addRocksAndMushrooms(scene, rand);
   // 薬屋の建物(煙突と煙のある最初の家)=おえんちゃんの家。
   // みんなの家から離れた静かな場所に建て、ドアは小道の方を向ける
-  const updateSmoke = addShopArea(scene, rand, glowHerbPositions, OEN_HOME, OEN_JUNCTION);
+  const updateSmoke = addShopArea(
+    scene,
+    rand,
+    glowHerbPositions,
+    herbSightings,
+    OEN_HOME,
+    OEN_JUNCTION
+  );
   const updateGlowParticles = addGlowParticles(scene, rand, glowHerbPositions);
 
   // --- 町を作る:湖・丘・道・集落・畑・牧場・お花畑 ---
@@ -392,6 +433,10 @@ export function createWorld(
         yaw: rand() * Math.PI * 2,
       });
       scene.add(flower);
+      herbSightings.push({
+        direction: flower.position.clone().normalize(),
+        species: HERB_SPECIES_ID.get(factory)!,
+      });
     }
   }
 
@@ -482,7 +527,7 @@ export function createWorld(
   // ここまでに置いた不透明のトゥーンオブジェクトすべてに影を落とさせる
   enableShadows(scene);
 
-  return (time: number, playerPosition: THREE.Vector3) => {
+  const update = (time: number, playerPosition: THREE.Vector3) => {
     // 太陽の周回:初期方向を軸のまわりに回すだけなので誤差が蓄積しない
     SUN_DIRECTION.copy(SUN_INITIAL).applyAxisAngle(
       SUN_AXIS,
@@ -502,6 +547,8 @@ export function createWorld(
     updateButterflies(time);
     updateShootingStars(time);
   };
+
+  return { update, npcs, herbSightings };
 }
 
 /**
@@ -687,12 +734,14 @@ function jitterDirection(base: THREE.Vector3, rand: Rand, amount: number): THREE
 
 /**
  * 薬草の群生地。開始地点のそばにも置き、すぐに薬草星だと分かるようにする。
- * 7種類の薬草・花を数本ずつまとめて生やし、「観察したくなる場所」を作る
+ * 7種類の薬草・花を数本ずつまとめて生やし、「観察したくなる場所」を作る。
+ * 置いた株は sightings に記録し、図鑑の発見判定に使う
  */
 function addHerbClusters(
   scene: THREE.Scene,
   rand: Rand,
-  glowHerbPositions: THREE.Vector3[]
+  glowHerbPositions: THREE.Vector3[],
+  sightings: HerbSighting[]
 ): void {
   const herbFactories = [
     createRoundLeafHerb,
@@ -713,6 +762,10 @@ function addHerbClusters(
       });
       scene.add(herb);
       if (factory === createGlowHerb) glowHerbPositions.push(herb.position.clone());
+      sightings.push({
+        direction: herb.position.clone().normalize(),
+        species: HERB_SPECIES_ID.get(factory)!,
+      });
     }
     // 群生地の脇に、小さな花のかたまりを添える
     const flowerCount = 2 + Math.floor(rand() * 3);
@@ -722,6 +775,10 @@ function addHerbClusters(
         yaw: rand() * Math.PI * 2,
       });
       scene.add(flower);
+      sightings.push({
+        direction: flower.position.clone().normalize(),
+        species: HERB_SPECIES_ID.get(createSmallFlower)!,
+      });
     }
   }
 }
@@ -859,6 +916,7 @@ function addShopArea(
   scene: THREE.Scene,
   rand: Rand,
   glowHerbPositions: THREE.Vector3[],
+  sightings: HerbSighting[],
   homeDirection: THREE.Vector3,
   faceTarget: THREE.Vector3
 ): (time: number) => void {
@@ -919,6 +977,10 @@ function addShopArea(
     });
     scene.add(herb);
     if (factory === createGlowHerb) glowHerbPositions.push(herb.position.clone());
+    sightings.push({
+      direction: herb.position.clone().normalize(),
+      species: HERB_SPECIES_ID.get(factory)!,
+    });
   }
 
   // --- 煙突の煙 ---
