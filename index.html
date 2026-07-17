@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='42' fill='%2374b160'/><circle cx='36' cy='40' r='10' fill='%238ac26e'/><circle cx='62' cy='60' r='8' fill='%234f8449'/></svg>"
+    />
+    <title>Tiny Planet Walker</title>
+  </head>
+  <body>
+    <div id="hud">WASD / 矢印キー:歩く ドラッグ:カメラ ホイール:ズーム</div>
+    <canvas id="app"></canvas>
+    <!-- タッチ端末用の仮想スティック(CSSで pointer: coarse のときだけ表示) -->
+    <div id="joystick"><div id="joystick-knob"></div></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
