@@ -1,6 +1,9 @@
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
+  // GitHub Pages はサブパス(https://<user>.github.io/tiny-planet-walker/)で
+  // 配信されるため、アセットの参照パスをリポジトリ名に合わせる
+  base: '/tiny-planet-walker/',
   build: {
     // バンドルの大半はThree.js本体とポストプロセスで、
     // この作品は起動時にすべて必要になるため、コード分割の恩恵がない。
