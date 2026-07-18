@@ -637,9 +637,7 @@ function buildCharacter(): { root: THREE.Group; limbs: CharacterLimbs } {
     new THREE.Vector3(0, 0, 0),
     new THREE.Vector3(0, -0.04, 0.18),
     new THREE.Vector3(0.13, 0.14, 0.32), // リュックを避けて横へ逃がしつつ上へ
-    // 先端は腰の高さまで。肩まで上げると、見下ろしカメラで頭の縁越しに
-    // 「顔に掛かる1本の毛」のように見えてしまう(2026-07-18の不具合)
-    new THREE.Vector3(0.24, 0.26, 0.34),
+    new THREE.Vector3(0.22, 0.48, 0.32), // 先端を肩の高さ近くまで上げ、正面からも白い先がのぞく
   ]);
   const tailMesh = new THREE.Mesh(
     flatGeometry(new THREE.TubeGeometry(tailCurve, 9, 0.05, 5, false)),
