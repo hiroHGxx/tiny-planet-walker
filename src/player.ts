@@ -566,8 +566,8 @@ function buildCharacter(): { root: THREE.Group; limbs: CharacterLimbs } {
   const hairBall = new THREE.Mesh(flatGeometry(new THREE.SphereGeometry(0.275, 9, 7)), hair);
   // 低すぎるとギザギザの縁の「歯」が1本、眼鏡の上に垂れた毛のように見える
   // (2026-07-18に長く追った不具合の真犯人)。少し上・後ろに保つこと
-  hairBall.position.set(0, 0.08, 0.08);
-  hairBall.scale.set(1.09, 0.96, 1.0); // 髪の横幅を広げ、相対的に顔を小さく見せる
+  hairBall.position.set(0, 0.09, 0.06); // 前寄り・やや上で前髪の根元を丸みで覆う
+  hairBall.scale.set(1.09, 0.96, 1.03); // 横幅と前後の丸みを広げ、相対的に顔を小さく見せる
   head.add(hairBall);
 
   // 前髪・横髪:しずく型の薄い房を「頭の球面に沿わせて」並べる。
@@ -617,16 +617,19 @@ function buildCharacter(): { root: THREE.Group; limbs: CharacterLimbs } {
   // 前髪:根元を頭にわずかに埋め(radius小さめ)、厚みを薄くして
   // 毛先だけ前に落とす(lean大きめ)。中央2〜3束を主役に、外端ほど薄く短く。
   // 下端は眼鏡(上端y≈0.09)に少しかかる程度
-  const BANG_RADIUS = 0.226;
-  addHairLock(-0.08, 0.19, 0.15, 0.125, 0.04, false, 0.038, BANG_RADIUS, 0.22); // 主
-  addHairLock(-0.44, 0.185, 0.14, 0.105, -0.12, true, 0.034, BANG_RADIUS, 0.21);
-  addHairLock(0.3, 0.185, 0.15, 0.11, 0.1, false, 0.036, BANG_RADIUS, 0.22);
-  addHairLock(-0.82, 0.175, 0.12, 0.12, -0.16, false, 0.028, BANG_RADIUS, 0.17); // 端:横髪へつなぐ
-  addHairLock(0.72, 0.175, 0.12, 0.11, 0.15, true, 0.028, BANG_RADIUS, 0.17);
+  const BANG_RADIUS = 0.221;
+  addHairLock(-0.08, 0.19, 0.15, 0.125, 0.04, false, 0.032, BANG_RADIUS, 0.22); // 主
+  addHairLock(-0.44, 0.185, 0.14, 0.105, -0.12, true, 0.028, BANG_RADIUS, 0.21);
+  addHairLock(0.3, 0.185, 0.15, 0.11, 0.1, false, 0.03, BANG_RADIUS, 0.22);
+  addHairLock(-0.82, 0.175, 0.12, 0.12, -0.16, false, 0.024, BANG_RADIUS, 0.17); // 端:横髪へつなぐ
+  addHairLock(0.72, 0.175, 0.12, 0.11, 0.15, true, 0.024, BANG_RADIUS, 0.17);
 
   // 横髪:頬に沿って顎の近くへ。上端を高めにして前髪の端と重ね、段差をなくす
-  addHairLock(-1.08, 0.165, 0.14, 0.35, -0.04, false, 0.05, HAIR_RADIUS, 0.08);
-  addHairLock(1.08, 0.165, 0.14, 0.34, 0.04, false, 0.05, HAIR_RADIUS, 0.08);
+  addHairLock(-1.08, 0.175, 0.15, 0.36, -0.04, false, 0.055, 0.232, 0.1);
+  addHairLock(1.08, 0.175, 0.15, 0.35, 0.04, false, 0.055, 0.232, 0.1);
+  // こめかみの土台:前髪の外端の後ろにボリュームを足し、頭の丸みからつなげる
+  addHairLock(-0.95, 0.215, 0.13, 0.11, -0.1, false, 0.06, 0.229, 0.08);
+  addHairLock(0.95, 0.215, 0.13, 0.11, 0.1, false, 0.06, 0.229, 0.08);
   addHairLock(-1.48, 0.13, 0.13, 0.3, 0, true, 0.05, HAIR_RADIUS, 0.06);
   addHairLock(1.48, 0.13, 0.13, 0.3, 0, false, 0.05, HAIR_RADIUS, 0.06);
   // 耳の後ろ:横髪と後頭部の間の隙間を埋めて、ボブを一周つなげる
