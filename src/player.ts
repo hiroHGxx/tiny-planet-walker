@@ -577,10 +577,9 @@ function buildCharacter(): { root: THREE.Group; limbs: CharacterLimbs } {
   // 均一な板や束に見えないようにする
   const strandSpecs: Array<[number, number, number, number, number, number, boolean]> = [
     // [x, 房の長さ, z, 房の太さ, 傾き(rad), 厚み, 明るい色の房か]
-    // 中央寄りの3本は、先端(0.2 - 長さ)が眼鏡の上端(y≈0.09)より上で止まる長さにする
-    [0, 0.1, -0.205, 0.06, 0, 0.62, false], // 中央
-    [-0.08, 0.1, -0.202, 0.052, 0.12, 0.55, true], // 少し前に出す房
-    [0.08, 0.11, -0.19, 0.058, -0.1, 0.7, false],
+    [0, 0.19, -0.205, 0.06, 0, 0.62, false], // 中央:眼鏡の間まで(参考絵準拠)
+    [-0.08, 0.135, -0.202, 0.052, 0.12, 0.55, true], // 少し前に出す房
+    [0.08, 0.155, -0.19, 0.058, -0.1, 0.7, false],
     [-0.155, 0.19, -0.148, 0.066, 0.17, 0.62, false],
     [0.155, 0.16, -0.155, 0.058, -0.14, 0.5, true],
   ];
@@ -638,7 +637,9 @@ function buildCharacter(): { root: THREE.Group; limbs: CharacterLimbs } {
     new THREE.Vector3(0, 0, 0),
     new THREE.Vector3(0, -0.04, 0.18),
     new THREE.Vector3(0.13, 0.14, 0.32), // リュックを避けて横へ逃がしつつ上へ
-    new THREE.Vector3(0.22, 0.48, 0.32), // 先端を肩の高さ近くまで上げ、正面からも白い先がのぞく
+    // 先端は腰の高さまで。肩まで上げると、見下ろしカメラで頭の縁越しに
+    // 「顔に掛かる1本の毛」のように見えてしまう(2026-07-18の不具合)
+    new THREE.Vector3(0.24, 0.26, 0.34),
   ]);
   const tailMesh = new THREE.Mesh(
     flatGeometry(new THREE.TubeGeometry(tailCurve, 9, 0.05, 5, false)),
