@@ -570,34 +570,55 @@ function buildCharacter(): { root: THREE.Group; limbs: CharacterLimbs } {
   hairBall.scale.set(1.09, 0.96, 1.0); // 髪の横幅を広げ、相対的に顔を小さく見せる
   head.add(hairBall);
 
-  // 前髪:参考絵のやわらかい丸い房(つぶした球)を並べてスカラップにする。
-  // 円錐だと先細りの毛先が「1本の毛」やギザギザの歯に見えてしまう。
-  // 房の下端は眼鏡の上端(y≈0.09)より上に置くこと
-  const lockGeometry = flatGeometry(new THREE.SphereGeometry(1, 7, 5));
-  const lockSpecs: Array<[number, number, number, number, number, boolean]> = [
-    // [x, 房の下端y, 幅, 高さ, z, 明るい色の房か]
-    [0, 0.1, 0.078, 0.16, -0.2, false], // 中央:いちばん下まで
-    [-0.085, 0.115, 0.07, 0.14, -0.198, true],
-    [0.085, 0.11, 0.074, 0.15, -0.196, false],
-    [-0.16, 0.105, 0.075, 0.15, -0.168, false],
-    [0.16, 0.11, 0.07, 0.14, -0.17, true],
-    [-0.225, 0.12, 0.06, 0.13, -0.125, true],
-    [0.225, 0.115, 0.062, 0.14, -0.128, false],
-  ];
-  for (const [x, bottom, w, h, z, light] of lockSpecs) {
-    const lock = new THREE.Mesh(lockGeometry, light ? hairLight : hair);
-    lock.scale.set(w, h / 2, 0.048);
-    lock.position.set(x, bottom + h / 2, z);
-    head.add(lock);
-  }
+  // 前髪:しずく型の薄い房(Shape+ExtrudeGeometry)。
+  // 上が広く毛先がすこし細くなる形で、丸いお団子にも鋭いトゲにもしない。
+  // 房ごとに幅・長さ・傾きを変え、左右非対称に流す(キャラクターシート準拠)
+  const bangShape = new THREE.Shape();
+  bangShape.moveTo(-0.5, 0);
+  bangShape.quadraticCurveTo(-0.56, -0.45, -0.2, -0.88); // 左辺:下へすぼむ
+  bangShape.quadraticCurveTo(-0.04, -1.04, 0.12, -0.9); // 丸みのある毛先(中心やや右)
+  bangShape.quadraticCurveTo(0.5, -0.5, 0.5, 0); // 右辺
+  bangShape.quadraticCurveTo(0, 0.14, -0.5, 0); // 上辺(土台へ隠す)
+  const bangGeometry = flatGeometry(
+    new THREE.ExtrudeGeometry(bangShape, { depth: 1, bevelEnabled: false, curveSegments: 3 })
+  );
+  bangGeometry.translate(0, 0, -0.5); // 厚みの中心を原点へ
 
-  // 横髪:頬を包みながら裾が外へ広がる房
+  /** 前髪ひと房。widthとheightは房の大きさ、tiltは毛先の流れ(+で右へ) */
+  const addBangLock = (
+    x: number,
+    top: number,
+    width: number,
+    height: number,
+    z: number,
+    tilt: number,
+    light: boolean
+  ) => {
+    const lock = new THREE.Mesh(bangGeometry, light ? hairLight : hair);
+    lock.scale.set(width, height, 0.055);
+    lock.position.set(x, top, z);
+    lock.rotation.set(0.16, 0, tilt); // 上端をおでこの傾きに沿わせてから流す
+    head.add(lock);
+  };
+  // 中央やや左に主となる長い房、外側ほど短く斜め外へ流す(等間隔にしない)
+  addBangLock(-0.02, 0.225, 0.16, 0.17, -0.2, 0.05, false); // 主となる房
+  addBangLock(-0.12, 0.215, 0.12, 0.14, -0.185, -0.16, true);
+  addBangLock(-0.205, 0.21, 0.15, 0.16, -0.142, -0.3, false);
+  addBangLock(0.095, 0.215, 0.145, 0.14, -0.188, 0.2, false);
+  addBangLock(0.195, 0.205, 0.125, 0.145, -0.15, 0.38, true);
+  // こめかみ:前髪と横髪の間の肌の隙間を埋め、境目を自然につなぐ
+  addBangLock(-0.245, 0.185, 0.115, 0.15, -0.105, -0.42, false);
+  addBangLock(0.25, 0.17, 0.105, 0.14, -0.1, 0.5, false);
+
+  // 横髪:頬を包むボブ。丸い耳当てにならないよう、縦長にして内側・正面側へ寄せ、
+  // 上端は髪の土台につなぎ、下端は顎に沿って内側へ収める
   const sidePuffGeometry = flatGeometry(new THREE.SphereGeometry(0.115, 7, 5));
   for (const side of [-1, 1]) {
     const puff = new THREE.Mesh(sidePuffGeometry, hair);
-    puff.position.set(side * 0.235, -0.06, -0.01);
-    puff.scale.set(0.8, 1.25, 1.0);
-    puff.rotation.z = side * 0.12; // 裾を外へ広げる
+    puff.position.set(side * 0.2, -0.08, -0.05);
+    puff.scale.set(0.6, 1.55, 0.95);
+    puff.rotation.z = side * -0.08; // 裾を顎へ向けて内側へ丸める
+    puff.rotation.y = side * 0.25; // 頬のカーブに沿わせる
     head.add(puff);
   }
   // 後頭部の丸み(えり足まで2段でボブの丸みを出す)
