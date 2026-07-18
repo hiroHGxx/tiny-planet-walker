@@ -13,8 +13,15 @@ import { currentPlanet } from '../planet-state.ts';
  * content/npcs.ts の10人を星に増やし、「E 話す」でノベル風の会話窓を開く。
  * 窓の左の似顔絵は画像ファイルではなく、話し相手の3Dモデルを
  * 小さな専用レンダラーでその場で描く(生中継方式)。
+ * 行頭が「@」のセリフはおえんちゃん(プレイヤー)の番で、
+ * 似顔絵と名前をプレイヤーのものに切り替える(相手と同じ生中継方式)。
  * 依頼の受注・納品の会話は quests 機能の判断に従う。
  */
+
+/** 会話窓に出すプレイヤーの名前(肩書き込み) */
+const PLAYER_NAME = 'おえん(薬師)';
+/** プレイヤーの似顔絵フレーミング用の頭上高さ(頭頂 約1.3 + 余白) */
+const PLAYER_PORTRAIT_HEIGHT = 1.45;
 
 /** この表面距離まで近づいたら話しかけられる */
 const TALK_DISTANCE = 2.2;
@@ -48,15 +55,29 @@ function mulberry32(seed: number): () => number {
 interface NamedNpc {
   def: NamedNpcDef;
   npc: Npc;
+  /** 頭上の依頼マーカーDOM(「!」=依頼あり、「✓」=納品できる) */
+  marker: HTMLDivElement;
+  /** いま出すべきマーカー文字(空=非表示)。間引き判定の結果を持つ */
+  markerText: string;
 }
+
+/** マーカーの会話種別チェックの間隔(秒)。毎フレームは無駄なので間引く */
+const MARKER_CHECK_INTERVAL = 0.5;
 
 // 使い回し用の一時オブジェクト
 const _playerDirection = new THREE.Vector3();
 const _towards = new THREE.Vector3();
+const _markerAnchor = new THREE.Vector3();
+const _markerProjected = new THREE.Vector3();
 
 export const talkFeature: Feature = {
   id: 'talk',
   setup(ctx: FeatureContext): void {
+    // --- 依頼マーカーのDOMレイヤー(つぶやき吹き出しと同じスクリーン投影方式) ---
+    const markerLayer = document.createElement('div');
+    markerLayer.id = 'quest-marker-layer';
+    document.body.appendChild(markerLayer);
+
     // --- 名前つき村人を星に置く ---
     const villagers: NamedNpc[] = NAMED_NPCS.filter(
       (def) => (def.planet ?? 1) === currentPlanet()
@@ -64,7 +85,10 @@ export const talkFeature: Feature = {
       const npc = new Npc(def.home.clone(), mulberry32(def.seed));
       enableShadows(npc.mesh);
       ctx.scene.add(npc.mesh);
-      return { def, npc };
+      const marker = document.createElement('div');
+      marker.className = 'quest-marker';
+      markerLayer.appendChild(marker);
+      return { def, npc, marker, markerText: '' };
     });
 
     // --- 会話窓のDOM ---
@@ -98,7 +122,10 @@ export const talkFeature: Feature = {
       camera: THREE.PerspectiveCamera;
       clone: THREE.Object3D | null;
     } | null = null;
-    const paintPortrait = (npc: Npc) => {
+    /** 直前に描いたモデル(同じ話者が続く行では再描画を省く) */
+    let portraitSource: THREE.Object3D | null = null;
+    const paintPortrait = (mesh: THREE.Object3D, height: number, faceCamera = false) => {
+      if (portraitSource === mesh) return;
       try {
         if (!portrait) {
           const renderer = new THREE.WebGLRenderer({
@@ -116,19 +143,22 @@ export const talkFeature: Feature = {
           portrait = { renderer, scene, camera, clone: null };
         }
         if (portrait.clone) portrait.scene.remove(portrait.clone);
-        // 話し相手の3Dモデルを写す(ジオメトリ・マテリアルは共有のまま)
-        const clone = npc.mesh.clone(true);
+        // 話し手の3Dモデルを写す(ジオメトリ・マテリアルは共有のまま)
+        const clone = mesh.clone(true);
         clone.position.set(0, 0, 0);
         clone.quaternion.identity();
+        // プレイヤーのモデルは -Z が正面(NPCは +Z)なので、カメラへ向き直す
+        if (faceCamera) clone.rotateY(Math.PI);
         clone.visible = true;
         clone.traverse((child) => (child.visible = true));
         portrait.scene.add(clone);
         portrait.clone = clone;
         // 顔の高さに正対して、少しだけ見上げる(頭頂部ではなく顔を写す)
-        const h = npc.portraitHeight;
+        const h = height;
         portrait.camera.position.set(0, h * 0.56, h * 0.98);
         portrait.camera.lookAt(0, h * 0.6, 0);
         portrait.renderer.render(portrait.scene, portrait.camera);
+        portraitSource = mesh;
       } catch {
         // WebGLコンテキストを増やせない環境では似顔絵なしで会話できればよい
       }
@@ -142,7 +172,17 @@ export const talkFeature: Feature = {
     let pendingOffer: (() => void) | null = null;
 
     const showLine = () => {
-      textEl.textContent = lines[lineIndex] ?? '';
+      const raw = lines[lineIndex] ?? '';
+      // 行頭「@」はおえんちゃんの番:名前と似顔絵をプレイヤーに切り替える
+      const playerTurn = raw.startsWith('@');
+      textEl.textContent = playerTurn ? raw.slice(1) : raw;
+      if (playerTurn) {
+        nameRow.textContent = PLAYER_NAME;
+        paintPortrait(ctx.player.mesh, PLAYER_PORTRAIT_HEIGHT, true);
+      } else if (talking) {
+        nameRow.textContent = `${talking.def.name}(${talking.def.title})`;
+        paintPortrait(talking.npc.mesh, talking.npc.portraitHeight);
+      }
       const last = lineIndex >= lines.length - 1;
       hint.style.visibility = last && pendingOffer ? 'hidden' : 'visible';
       if (last && pendingOffer) pendingOffer();
@@ -176,7 +216,6 @@ export const talkFeature: Feature = {
       // 歩き続けたまま会話に入らないよう、押しっぱなしのキーを解除する
       window.dispatchEvent(new Event('blur'));
 
-      nameRow.textContent = `${def.name}(${def.title})`;
       choices.innerHTML = '';
       pendingOffer = null;
 
@@ -224,7 +263,6 @@ export const talkFeature: Feature = {
       }
 
       lineIndex = 0;
-      paintPortrait(npc);
       window_.classList.add('open');
       showLine();
     };
@@ -264,11 +302,23 @@ export const talkFeature: Feature = {
       });
     }
 
-    talkRuntime = { villagers, closeDialog, isTalking: () => talking !== null, talking: () => talking };
+    talkRuntime = {
+      villagers,
+      markerLayer,
+      closeDialog,
+      isTalking: () => talking !== null,
+      talking: () => talking,
+    };
   },
-  update(_deltaTime: number, ctx: FeatureContext): void {
-    if (!talkRuntime || ctx.director.mode !== 'planet') return;
-    elapsed += _deltaTime;
+  update(deltaTime: number, ctx: FeatureContext): void {
+    if (!talkRuntime) return;
+    // 家の中では星のマーカーが画面に残らないよう、レイヤーごと隠す
+    if (ctx.director.mode !== 'planet') {
+      talkRuntime.markerLayer.style.display = 'none';
+      return;
+    }
+    talkRuntime.markerLayer.style.display = '';
+    elapsed += deltaTime;
     _playerDirection.copy(ctx.player.mesh.position).normalize();
     for (const villager of talkRuntime.villagers) {
       villager.npc.update(elapsed, _playerDirection);
@@ -291,13 +341,53 @@ export const talkFeature: Feature = {
         ) * PLANET_RADIUS;
       if (surface > BREAK_DISTANCE) talkRuntime.closeDialog();
     }
+
+    // --- 依頼マーカー ---
+    // 会話種別の判定(依頼の進行・持ち物の数を見る)は間引いて行う
+    markerCheckTimer -= deltaTime;
+    if (markerCheckTimer <= 0) {
+      markerCheckTimer = MARKER_CHECK_INTERVAL;
+      for (const villager of talkRuntime.villagers) {
+        const kind = questConversation(villager.def.id).kind;
+        villager.markerText = kind === 'offer' ? '!' : kind === 'deliver' ? '✓' : '';
+      }
+    }
+    // 位置の追従は毎フレーム(頭の少し上をスクリーンへ投影)
+    for (const villager of talkRuntime.villagers) {
+      const { npc, marker } = villager;
+      const show =
+        villager.markerText !== '' && npc.mesh.visible && talking !== villager;
+      if (!show) {
+        marker.style.opacity = '0';
+        continue;
+      }
+      if (marker.textContent !== villager.markerText) {
+        marker.textContent = villager.markerText;
+        marker.classList.toggle('deliver', villager.markerText === '✓');
+      }
+      _markerAnchor
+        .copy(npc.mesh.position)
+        .normalize()
+        .multiplyScalar(PLANET_RADIUS + npc.portraitHeight + 0.4);
+      _markerProjected.copy(_markerAnchor).project(ctx.camera);
+      // カメラの後ろ側にあるときは表示しない
+      if (_markerProjected.z > 1) {
+        marker.style.opacity = '0';
+        continue;
+      }
+      marker.style.left = `${(_markerProjected.x * 0.5 + 0.5) * window.innerWidth}px`;
+      marker.style.top = `${(-_markerProjected.y * 0.5 + 0.5) * window.innerHeight}px`;
+      marker.style.opacity = '1';
+    }
   },
 };
 
 let talkRuntime: {
   villagers: NamedNpc[];
+  markerLayer: HTMLDivElement;
   closeDialog: () => void;
   isTalking: () => boolean;
   talking: () => NamedNpc | null;
 } | null = null;
 let elapsed = 0;
+let markerCheckTimer = 0;

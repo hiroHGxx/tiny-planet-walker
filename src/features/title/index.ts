@@ -38,7 +38,7 @@ export const titleFeature: Feature = {
 
     const heading = document.createElement('h1');
     heading.className = 'title-heading';
-    heading.textContent = '薬草の星';
+    heading.textContent = 'おえんちゃんと薬草の星';
     const subtitle = document.createElement('div');
     subtitle.className = 'title-subtitle';
     subtitle.textContent = '小さな星をあるく、薬師の箱庭';

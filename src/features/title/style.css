@@ -36,11 +36,12 @@
 .title-heading {
   margin: 0;
   font-family: 'Hiragino Mincho ProN', 'Yu Mincho', 'Noto Serif JP', serif;
-  font-size: 44px;
+  /* 11文字の題字が小さな画面でもはみ出さないよう可変にする */
+  font-size: clamp(22px, 5.5vw, 38px);
   font-weight: 600;
-  letter-spacing: 0.35em;
+  letter-spacing: 0.18em;
   /* 中央寄せの字間調整(最後の字の右余白ぶん) */
-  text-indent: 0.35em;
+  text-indent: 0.18em;
   text-shadow: 0 2px 18px rgba(7, 11, 26, 0.8);
 }
 

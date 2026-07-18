@@ -14,6 +14,7 @@ export const CHAPTER1: ReadonlyArray<QuestDef> = [
     title: 'マルさんに まるば草を3株とどける',
     intro: [
       'おや、おえんちゃん。ちょうどよかった。',
+      '@マルさん、その手…… やけどですか? 見せてください。',
       '窯で手をあぶってしまってね。まるば草を3株、摘んできてもらえるかい?',
     ],
     accept: 'ありがとう。無理はしないでおくれよ。',
@@ -21,6 +22,7 @@ export const CHAPTER1: ReadonlyArray<QuestDef> = [
     thanks: [
       'おお、みずみずしいまるば草だ。',
       'これで軟膏がつくれる…って、それはおえんちゃんの仕事か。はは。',
+      '@ふふ、まかせてください。よく効く軟膏、つくりますね。',
     ],
     need: { item: 'roundleaf', count: 3 },
     starlight: 1,
@@ -158,6 +160,7 @@ export const CHAPTER1: ReadonlyArray<QuestDef> = [
     thanks: [
       'おお…見える見える。浮きがはっきり見えるわい。',
       'おえんちゃん、あんたは前の薬師さんに、よう似てきたのう。',
+      '@……えへへ。師匠に追いつけるように、がんばります。',
     ],
     need: { item: 'drops_bud', count: 1 },
     starlight: 2,
@@ -177,6 +180,7 @@ export const CHAPTER1: ReadonlyArray<QuestDef> = [
     thanks: [
       'わあ、きれいに咲いてる…!',
       'できあがったら、いちばんにおえんちゃんにかぶせてあげる。',
+      '@ほんと? たのしみにしてますね、ハナさん。',
     ],
     need: { item: 'starflower', count: 2 },
     starlight: 1,

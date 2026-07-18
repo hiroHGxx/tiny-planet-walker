@@ -2,3 +2,7 @@ node_modules/
 dist/
 .DS_Store
 素材/
+
+# ローカル専用(公開リポジトリに含めない)
+.claude/
+debug/
