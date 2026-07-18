@@ -1,6 +1,7 @@
 import './style.css';
 import type { Feature, FeatureContext } from '../feature.ts';
 import { clearAllSaves } from '../save.ts';
+import { isArriving } from '../planet-state.ts';
 
 /**
  * タイトル画面(F16)。
@@ -27,6 +28,8 @@ const BLOCKED_KEYS = new Set([
 export const titleFeature: Feature = {
   id: 'title',
   setup(ctx: FeatureContext): void {
+    // 気球で移動してきた直後はタイトルを出さない(planets側が到着演出を出す)
+    if (isArriving()) return;
     const overlay = document.createElement('div');
     overlay.id = 'title-screen';
 

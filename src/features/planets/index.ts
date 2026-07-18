@@ -6,7 +6,7 @@ import { addCollider } from '../../collision.ts';
 import type { Feature, FeatureContext } from '../feature.ts';
 import { addInteractable } from '../interact/index.ts';
 import { starlightCount } from '../quests/index.ts';
-import { currentPlanet, setPlanet } from '../planet-state.ts';
+import { currentPlanet, setPlanet, markTraveling, isArriving } from '../planet-state.ts';
 
 /**
  * 次の星へ(F20)。
@@ -32,6 +32,18 @@ const PAD_DIRECTION = new THREE.Vector3(0.42, 0.88, -0.16).normalize();
 export const planetsFeature: Feature = {
   id: 'planets',
   setup(ctx: FeatureContext): void {
+    // 気球での到着直後:暗い空→星の名前→ふっと消えて探索へ
+    if (isArriving()) {
+      const arrival = document.createElement('div');
+      arrival.id = 'planet-arrival';
+      const name = document.createElement('div');
+      name.className = 'planet-arrival-name';
+      name.textContent = PLANETS[currentPlanet() - 1]?.name ?? '';
+      arrival.appendChild(name);
+      document.body.appendChild(arrival);
+      window.setTimeout(() => arrival.classList.add('reveal'), 1900);
+      window.setTimeout(() => arrival.remove(), 3100);
+    }
     // --- 気球の発着台 ---
     const pad = new THREE.Group();
     const deck = new THREE.Mesh(
@@ -115,6 +127,7 @@ export const planetsFeature: Feature = {
           go.textContent = '旅立つ';
           go.addEventListener('click', () => {
             setPlanet(number);
+            markTraveling();
             // 暗転してから世界を作り直す
             const fade = document.querySelector('#scene-fade');
             fade?.classList.add('dark');

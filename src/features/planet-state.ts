@@ -18,3 +18,27 @@ export function currentPlanet(): number {
 export function setPlanet(next: number): void {
   saveFeatureData('planet', 1, { planet: Math.max(1, next) });
 }
+
+const ARRIVING_KEY = 'tiny-planet-walker:arriving';
+let arrivingCache: boolean | null = null;
+
+/** 旅立つ直前に呼ぶ(reload後の到着演出用の一回きりの旗) */
+export function markTraveling(): void {
+  try {
+    sessionStorage.setItem(ARRIVING_KEY, '1');
+  } catch {
+    // 保存できない環境では通常のタイトル画面になるだけ
+  }
+}
+
+/** 気球での到着直後か(最初の呼び出しで旗を消費し、以後は同じ答えを返す) */
+export function isArriving(): boolean {
+  if (arrivingCache !== null) return arrivingCache;
+  try {
+    arrivingCache = sessionStorage.getItem(ARRIVING_KEY) === '1';
+    sessionStorage.removeItem(ARRIVING_KEY);
+  } catch {
+    arrivingCache = false;
+  }
+  return arrivingCache;
+}
