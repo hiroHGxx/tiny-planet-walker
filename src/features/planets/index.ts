@@ -138,5 +138,17 @@ export const planetsFeature: Feature = {
         panel.classList.toggle('open');
       },
     });
+    planetsPanel = panel;
+  },
+  update(_deltaTime: number, ctx: FeatureContext): void {
+    // 発着台から歩いて離れたらパネルを閉じる
+    if (!planetsPanel?.classList.contains('open')) return;
+    _playerDir.copy(ctx.player.mesh.position).normalize();
+    if (_playerDir.dot(PAD_DIRECTION) < Math.cos(3.6 / PLANET_RADIUS)) {
+      planetsPanel.classList.remove('open');
+    }
   },
 };
+
+let planetsPanel: HTMLDivElement | null = null;
+const _playerDir = new THREE.Vector3();

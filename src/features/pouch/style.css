@@ -80,3 +80,27 @@
   font-weight: 700;
   color: #7a5a36;
 }
+
+/* 摘んだもののお知らせ(発見トーストより少し上に出す) */
+#pickup-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 126px;
+  transform: translate(-50%, 8px);
+  padding: 8px 16px;
+  color: #4a3a2c;
+  background: rgba(255, 252, 242, 0.95);
+  border: 1px solid rgba(74, 58, 44, 0.25);
+  border-radius: 999px;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 13px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s, transform 0.25s;
+  z-index: 6;
+}
+
+#pickup-toast.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}

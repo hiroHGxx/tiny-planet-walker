@@ -208,6 +208,18 @@ export const pouchFeature: Feature = {
       }
     };
     refreshPanel();
+
+    // 摘む・刈る・くむの手応え:何が入ったかをひとことで見せる
+    const toast = document.createElement('div');
+    toast.id = 'pickup-toast';
+    document.body.appendChild(toast);
+    let toastTimer = 0;
+    ctx.events.on('item-picked', ({ item }) => {
+      toast.textContent = `「${itemName(item)}」をポーチに入れた`;
+      toast.classList.add('show');
+      window.clearTimeout(toastTimer);
+      toastTimer = window.setTimeout(() => toast.classList.remove('show'), 1800);
+    });
   },
   update(deltaTime: number): void {
     // 摘んだ株の縮み・再生の育ちをなめらかに動かす

@@ -305,7 +305,7 @@ export function createAmbientAudio(): AmbientAudio {
       // 雨音は目標の強さへゆっくり寄せる(天気の変わり目を柔らかく)
       if (rainGain) {
         rainGain.gain.value +=
-          (rainLevel * 0.22 - rainGain.gain.value) * (1 - Math.exp(-1.2 * deltaTime));
+          (rainLevel * 0.1 - rainGain.gain.value) * (1 - Math.exp(-1.2 * deltaTime));
       }
 
       // 風はメロディの邪魔をしない程度に、ゆっくり強弱をつけてそよがせる

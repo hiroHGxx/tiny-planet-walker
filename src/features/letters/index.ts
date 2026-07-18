@@ -1,7 +1,7 @@
 import './style.css';
 import * as THREE from 'three';
 import { PALETTE, toonMaterial, flatGeometry } from '../../palette.ts';
-import { PLANET_RADIUS } from '../../world.ts';
+import { PLANET_RADIUS, LAKES } from '../../world.ts';
 import { LETTERS } from '../../content/letters.ts';
 import type { Feature, FeatureContext } from '../feature.ts';
 import { addInteractable } from '../interact/index.ts';
@@ -16,6 +16,23 @@ import { loadFeatureData, saveFeatureData } from '../save.ts';
 const VERSION = 1;
 const PICK_DISTANCE = 1.6;
 
+/**
+ * 手紙が湖の中に落ちないよう、湖に重なる場所は大円に沿って岸まで押し出す。
+ * (手書きの座標が地形と重なる事故をコードで防ぐ)
+ */
+export function pushedOffLakes(direction: THREE.Vector3): THREE.Vector3 {
+  for (const lake of LAKES) {
+    const needed = (lake.radius + 1.5) / PLANET_RADIUS;
+    const angle = direction.angleTo(lake.direction);
+    if (angle >= needed) continue;
+    const axis = new THREE.Vector3().crossVectors(lake.direction, direction);
+    if (axis.lengthSq() < 1e-8) axis.set(0, 1, 0).cross(lake.direction);
+    axis.normalize();
+    direction.applyAxisAngle(axis, needed - angle);
+  }
+  return direction;
+}
+
 export const lettersFeature: Feature = {
   id: 'letters',
   setup(ctx: FeatureContext): void {
@@ -23,9 +40,11 @@ export const lettersFeature: Feature = {
     const found = new Set(saved?.found ?? []);
     const save = () => saveFeatureData('letters', VERSION, { found: [...found] });
 
-    // --- 光る紙片を置く ---
+    // --- 光る紙片を置く(湖の上は岸へ寄せる) ---
     const props = new Map<string, THREE.Group>();
+    const directions = new Map<string, THREE.Vector3>();
     for (const letter of LETTERS) {
+      directions.set(letter.id, pushedOffLakes(letter.direction.clone()));
       const prop = new THREE.Group();
       const paper = new THREE.Mesh(
         flatGeometry(new THREE.BoxGeometry(0.34, 0.02, 0.26)),
@@ -33,8 +52,9 @@ export const lettersFeature: Feature = {
       );
       paper.rotation.y = Math.random() * Math.PI;
       prop.add(paper);
-      prop.position.copy(letter.direction).multiplyScalar(PLANET_RADIUS + 0.12);
-      prop.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), letter.direction);
+      const direction = directions.get(letter.id)!;
+      prop.position.copy(direction).multiplyScalar(PLANET_RADIUS + 0.12);
+      prop.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction);
       prop.visible = !found.has(letter.id);
       ctx.scene.add(prop);
       props.set(letter.id, prop);
@@ -121,7 +141,7 @@ export const lettersFeature: Feature = {
     // --- 拾う ---
     for (const letter of LETTERS) {
       addInteractable({
-        direction: letter.direction,
+        direction: directions.get(letter.id)!,
         radius: PICK_DISTANCE,
         label: '手紙を拾う',
         priority: 6,

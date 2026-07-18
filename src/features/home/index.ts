@@ -2,6 +2,7 @@ import './style.css';
 import * as THREE from 'three';
 import { PALETTE, toonMaterial, flatGeometry } from '../../palette.ts';
 import { OEN_HOME, OEN_JUNCTION } from '../../world.ts';
+import { moveToward } from '../../town.ts';
 import { RECIPES, canCraft } from '../../content/recipes.ts';
 import { itemIcon, itemName } from '../../content/items.ts';
 import type { Feature, FeatureContext } from '../feature.ts';
@@ -230,9 +231,11 @@ export const homeFeature: Feature = {
       });
 
     // 家のドア(星side)と、部屋のドア(室内side)
+    // ドアの判定は家の当たり判定(半径1.9)の外からでも届くよう、
+    // 小道側へ1.5ユニット出した位置に広め(2.2)で置く
     addInteractable({
-      direction: OEN_HOME.clone().lerp(OEN_JUNCTION, 0.06).normalize(),
-      radius: 1.6,
+      direction: moveToward(OEN_HOME.clone(), OEN_JUNCTION, 0.06),
+      radius: 2.2,
       label: '家に入る',
       priority: 8,
       onUse: enter,

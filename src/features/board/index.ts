@@ -216,5 +216,17 @@ export const boardFeature: Feature = {
         panel.classList.toggle('open');
       },
     });
+    boardRuntime = { panel, direction: boardDirection };
+  },
+  update(_deltaTime: number, ctx: FeatureContext): void {
+    // 掲示板から歩いて離れたらパネルを閉じる
+    if (!boardRuntime?.panel.classList.contains('open')) return;
+    _playerDir.copy(ctx.player.mesh.position).normalize();
+    if (_playerDir.dot(boardRuntime.direction) < Math.cos(3.2 / PLANET_RADIUS)) {
+      boardRuntime.panel.classList.remove('open');
+    }
   },
 };
+
+let boardRuntime: { panel: HTMLDivElement; direction: THREE.Vector3 } | null = null;
+const _playerDir = new THREE.Vector3();
