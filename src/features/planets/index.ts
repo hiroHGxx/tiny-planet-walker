@@ -16,11 +16,14 @@ import { currentPlanet, setPlanet } from '../planet-state.ts';
  * 元の星にはいつでも帰れる。
  */
 
-/** 星ごとの名前と、行くのに必要な星あかり */
+/**
+ * 星ごとの名前と、行くのに必要な星あかり。
+ * ※現在はデバッグ用に低め(5/10)。本来の値は 30/60 に戻す予定
+ */
 const PLANETS: ReadonlyArray<{ name: string; need: number }> = [
   { name: '薬草の星', need: 0 },
-  { name: 'こもれびの星', need: 30 },
-  { name: 'しんじゅの星', need: 60 },
+  { name: 'こもれびの星', need: 5 },
+  { name: 'しんじゅの星', need: 10 },
 ];
 
 /** 発着台の場所(開始地点から少し歩いた丘のふもと) */
