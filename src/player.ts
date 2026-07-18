@@ -577,7 +577,7 @@ function buildCharacter(): { root: THREE.Group; limbs: CharacterLimbs } {
   // 均一な板や束に見えないようにする
   const strandSpecs: Array<[number, number, number, number, number, number, boolean]> = [
     // [x, 房の長さ, z, 房の太さ, 傾き(rad), 厚み, 明るい色の房か]
-    [0, 0.21, -0.205, 0.06, 0, 0.62, false], // 中央:いちばん長く、少し前へ
+    [0, 0.15, -0.205, 0.06, 0, 0.62, false], // 中央:眼鏡の上で止める(目に掛からない長さ)
     [-0.08, 0.135, -0.202, 0.052, 0.12, 0.55, true], // 少し前に出す房
     [0.08, 0.155, -0.19, 0.058, -0.1, 0.7, false],
     [-0.155, 0.19, -0.148, 0.066, 0.17, 0.62, false],
