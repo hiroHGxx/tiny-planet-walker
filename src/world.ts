@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import {
   PALETTE,
+  THEME,
   PLANET_RADIUS,
   getGradientMap,
   flatGeometry,
@@ -76,7 +77,7 @@ const HERB_SPECIES_ID = new Map<(rand: Rand) => THREE.Group, string>([
 ]);
 
 import { currentPlanet } from './features/planet-state.ts';
-import { PLANET_HERBS } from './content/planets.ts';
+import { PLANET_HERBS, planetDef } from './content/planets.ts';
 
 /**
  * 星ごとに大陸の並びを回す回転。2つ目以降の星では村・湖・道の位置関係が
@@ -131,8 +132,17 @@ export const VILLAGE_CENTERS = [
   new THREE.Vector3(0.05, -0.85, -0.5).normalize().applyQuaternion(LAYOUT_ROTATION), // 裏側の小さな村
 ];
 
-/** 湖(方向と表面半径)。テストからも参照する */
-export const LAKES = [
+/**
+ * 湖(方向と表面半径)。テストからも参照する。
+ * 星の台帳(content/planets.ts)に layout.lakes があればそちらを使う
+ * (夏の星の大きな海+広い砂浜など、星ごとの大胆な地形替えに使う。
+ *  上書きの方向は絶対値=LAYOUT_ROTATIONを掛けないので星ごとに直接決める)
+ */
+export const LAKES: ReadonlyArray<{
+  direction: THREE.Vector3;
+  radius: number;
+  beach?: number;
+}> = planetDef(currentPlanet()).layout?.lakes ?? [
   { direction: new THREE.Vector3(0.5, 0.55, -0.65).normalize().applyQuaternion(LAYOUT_ROTATION), radius: 4 },
   { direction: new THREE.Vector3(-0.35, -0.45, -0.82).normalize().applyQuaternion(LAYOUT_ROTATION), radius: 2.4 },
 ];
@@ -294,7 +304,8 @@ const FARM_FIELDS = [
 /** 柵つき牧場の中心(ひつじ番の村人の配置にも使う) */
 export const PASTURES = [
   moveToward(VILLAGE_CENTERS[0]!.clone(), HILLS[1]!.direction, 0.19),
-  moveToward(VILLAGE_CENTERS[2]!.clone(), LAKES[1]!.direction, 0.18),
+  // 2つ目の湖は上書きレイアウトの星では無いこともある(その場合は1つ目に寄せる)
+  moveToward(VILLAGE_CENTERS[2]!.clone(), (LAKES[1] ?? LAKES[0])!.direction, 0.18),
 ].map((direction) => pushedOffRoads(direction, 3.2));
 
 /** 方向が「湖・丘・集落」のどれかに近すぎるか(配置を避けるための判定) */
@@ -398,7 +409,7 @@ export function createWorld(scene: THREE.Scene, planetIndex = 0): World {
   const updateGlowParticles = addGlowParticles(scene, rand, glowHerbPositions);
 
   // --- 町を作る:湖・丘・道・集落・畑・牧場・お花畑 ---
-  for (const lake of LAKES) addLake(scene, lake.direction, lake.radius);
+  for (const lake of LAKES) addLake(scene, lake.direction, lake.radius, lake.beach);
   addHill(scene, HILLS[0]!.direction, HILLS[0]!.radius, HILLS[0]!.height, PALETTE.grass[1]!);
   addHill(scene, HILLS[1]!.direction, HILLS[1]!.radius, HILLS[1]!.height, PALETTE.grass[2]!);
 
@@ -664,9 +675,9 @@ function createSky(): THREE.Mesh {
     depthWrite: false,
     uniforms: {
       uSunDirection: { value: SUN_DIRECTION }, // 参照共有(毎フレーム自動反映)
-      uNight: { value: new THREE.Color(PALETTE.skyNight) },
-      uMid: { value: new THREE.Color(PALETTE.skyMid) },
-      uDawn: { value: new THREE.Color(PALETTE.skyDawn) },
+      uNight: { value: new THREE.Color(THEME.skyNight) },
+      uMid: { value: new THREE.Color(THEME.skyMid) },
+      uDawn: { value: new THREE.Color(THEME.skyDawn) },
     },
     vertexShader: /* glsl */ `
       varying vec3 vDirection;

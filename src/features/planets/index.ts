@@ -7,6 +7,7 @@ import type { Feature, FeatureContext } from '../feature.ts';
 import { addInteractable } from '../interact/index.ts';
 import { starlightCount } from '../quests/index.ts';
 import { currentPlanet, setPlanet, markTraveling, isArriving } from '../planet-state.ts';
+import { PLANET_DEFS, PLANET_NUMBERS, planetDef } from '../../content/planets.ts';
 
 /**
  * 次の星へ(F20)。
@@ -14,17 +15,8 @@ import { currentPlanet, setPlanet, markTraveling, isArriving } from '../planet-s
  * 気球の発着台から別の星へ旅立てる(星のたね違いで木・岩・薬草・住人が変わる)。
  * 星の切り替えはページ再読み込みで行う(世界一式を作り直す最も安全な方法)。
  * 元の星にはいつでも帰れる。
+ * 星の名前・しきい値は content/planets.ts の台帳(PLANET_DEFS)に集約した。
  */
-
-/**
- * 星ごとの名前と、行くのに必要な星あかり。
- * ※現在はデバッグ用に低め(5/10)。本来の値は 30/60 に戻す予定
- */
-const PLANETS: ReadonlyArray<{ name: string; need: number }> = [
-  { name: '薬草の星', need: 0 },
-  { name: 'こもれびの星', need: 5 },
-  { name: 'しんじゅの星', need: 10 },
-];
 
 /** 発着台の場所(開始地点から少し歩いた丘のふもと) */
 const PAD_DIRECTION = new THREE.Vector3(0.42, 0.88, -0.16).normalize();
@@ -38,7 +30,7 @@ export const planetsFeature: Feature = {
       arrival.id = 'planet-arrival';
       const name = document.createElement('div');
       name.className = 'planet-arrival-name';
-      name.textContent = PLANETS[currentPlanet() - 1]?.name ?? '';
+      name.textContent = planetDef(currentPlanet()).name;
       arrival.appendChild(name);
       document.body.appendChild(arrival);
       window.setTimeout(() => arrival.classList.add('reveal'), 1900);
@@ -108,8 +100,8 @@ export const planetsFeature: Feature = {
       starlight.textContent = `いまの星あかり:✨ ${starlightCount()}`;
       panel.append(title, starlight);
 
-      PLANETS.forEach((planet, index) => {
-        const number = index + 1;
+      PLANET_NUMBERS.forEach((number) => {
+        const planet = PLANET_DEFS[number]!;
         const row = document.createElement('div');
         row.className = 'planets-row';
         const name = document.createElement('div');

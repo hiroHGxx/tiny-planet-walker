@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { PALETTE, toonMaterial, flatGeometry } from './palette.ts';
+import { PALETTE, THEME, toonMaterial, flatGeometry } from './palette.ts';
 
 /**
  * 薬草・木・岩・小物のファクトリ集。
@@ -128,9 +128,10 @@ export function createTree(rand: Rand): THREE.Group {
   trunk.position.y = trunkHeight / 2;
   tree.add(trunk);
 
+  // 木の葉色は星のテーマで差し替わる(春=桜、秋=紅葉など)
   const foliageColor =
-    PALETTE.foliage[Math.floor(rand() * PALETTE.foliage.length)]!;
-  const subColor = PALETTE.foliage[Math.floor(rand() * PALETTE.foliage.length)]!;
+    THEME.foliage[Math.floor(rand() * THEME.foliage.length)]!;
+  const subColor = THEME.foliage[Math.floor(rand() * THEME.foliage.length)]!;
   const foliageScale = 0.7 + rand() * 0.5;
   const kind = Math.floor(rand() * 3);
   if (kind === 0) {

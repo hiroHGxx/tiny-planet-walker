@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { planetDef } from './content/planets.ts';
 
 /** 惑星の半径(ワールド原点が惑星の中心) */
 export const PLANET_RADIUS = 25;
@@ -160,15 +161,38 @@ export function flatGeometry(geometry: THREE.BufferGeometry): THREE.BufferGeomet
 const grassColorObjects = PALETTE.grass.map((hex) => new THREE.Color(hex));
 
 /**
- * 星ごとの草地の色合い。世界を作る前に一度だけ呼ぶ。
- * 0=薬草の星(そのまま)、1=こもれびの星(秋の琥珀寄り)、2=しんじゅの星(淡く白っぽく)
+ * 星ごとに差し替わる色の現在値。初期値は共通パレット。
+ * setPlanetTheme が content/planets.ts の台帳を見て上書きする。
+ * 空・木の葉・湖の色はここを参照すること(PALETTEを直接見ると星のテーマが効かない)。
  */
-export function setPlanetTheme(planetIndex: number): void {
-  const shift = [null, { h: -0.09, s: 0.02, l: 0.015 }, { h: 0.05, s: -0.2, l: 0.09 }][
-    planetIndex
-  ];
-  if (!shift) return;
-  for (const color of grassColorObjects) color.offsetHSL(shift.h, shift.s, shift.l);
+export const THEME = {
+  foliage: [...PALETTE.foliage] as ReadonlyArray<number>,
+  sky: PALETTE.sky as number,
+  skyNight: PALETTE.skyNight as number,
+  skyMid: PALETTE.skyMid as number,
+  skyDawn: PALETTE.skyDawn as number,
+  water: PALETTE.water as number,
+  sand: PALETTE.sand as number,
+};
+
+/**
+ * 星ごとのテーマ(草地の色相・木の葉色・空・湖の色)を適用する。
+ * 世界を作る前に一度だけ呼ぶ。定義は content/planets.ts の PLANET_DEFS(1星=1エントリ)。
+ */
+export function setPlanetTheme(planet: number): void {
+  const theme = planetDef(planet).theme;
+  if (!theme) return;
+  if (theme.grassShift) {
+    const { h, s, l } = theme.grassShift;
+    for (const color of grassColorObjects) color.offsetHSL(h, s, l);
+  }
+  if (theme.foliage) THEME.foliage = [...theme.foliage];
+  if (theme.sky?.base !== undefined) THEME.sky = theme.sky.base;
+  if (theme.sky?.night !== undefined) THEME.skyNight = theme.sky.night;
+  if (theme.sky?.mid !== undefined) THEME.skyMid = theme.sky.mid;
+  if (theme.sky?.dawn !== undefined) THEME.skyDawn = theme.sky.dawn;
+  if (theme.water !== undefined) THEME.water = theme.water;
+  if (theme.sand !== undefined) THEME.sand = theme.sand;
 }
 
 /**

@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import {
   PALETTE,
+  THEME,
   PLANET_RADIUS,
   toonMaterial,
   flatGeometry,
@@ -142,17 +143,20 @@ const _yAxis = new THREE.Vector3(0, 1, 0);
 /**
  * 球面のキャップ(帽子形)を2枚重ねて湖を作る。
  * 外側のキャップが砂の縁、内側が水面。プレイヤーは入れない。
+ * beach は砂の縁の広さの倍率(省略時1.18。夏の星の広い砂浜はここを大きく)。
+ * 水と砂の色は星のテーマ(THEME)で差し替わる。
  */
 export function addLake(
   scene: THREE.Scene,
   direction: THREE.Vector3,
-  surfaceRadius: number
+  surfaceRadius: number,
+  beach = 1.18
 ): void {
   const angle = surfaceRadius / PLANET_RADIUS;
 
   const sand = new THREE.Mesh(
-    new THREE.SphereGeometry(PLANET_RADIUS + 0.02, 36, 8, 0, Math.PI * 2, 0, angle * 1.18),
-    toonMaterial(PALETTE.sand)
+    new THREE.SphereGeometry(PLANET_RADIUS + 0.02, 36, 8, 0, Math.PI * 2, 0, angle * beach),
+    toonMaterial(THEME.sand)
   );
   sand.quaternion.setFromUnitVectors(_yAxis, direction);
   sand.userData.noCastShadow = true;
@@ -161,7 +165,7 @@ export function addLake(
 
   const water = new THREE.Mesh(
     new THREE.SphereGeometry(PLANET_RADIUS + 0.045, 36, 8, 0, Math.PI * 2, 0, angle),
-    toonMaterial(PALETTE.water)
+    toonMaterial(THEME.water)
   );
   water.quaternion.setFromUnitVectors(_yAxis, direction);
   water.userData.noCastShadow = true;

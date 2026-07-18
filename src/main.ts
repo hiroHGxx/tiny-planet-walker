@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import './style.css';
 import { createWorld, enableShadows, getSunElevation } from './world.ts';
-import { PALETTE, setPlanetTheme } from './palette.ts';
+import { THEME, setPlanetTheme } from './palette.ts';
 import { Player, type PlayerInput } from './player.ts';
 import { FollowCamera } from './camera.ts';
 import { createEffects } from './effects.ts';
@@ -48,10 +48,10 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFShadowMap; // 縁の柔らかい影
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(PALETTE.sky);
 
 // 動く世界の更新関数と、つぶやき・図鑑が使う参照(村人・薬草)を受け取る
-setPlanetTheme(currentPlanet() - 1); // 星ごとの草地の色(世界を作る前に)
+setPlanetTheme(currentPlanet()); // 星ごとのテーマ(草地・木の葉・空・湖の色。世界を作る前に)
+scene.background = new THREE.Color(THEME.sky);
 const world = createWorld(scene, currentPlanet() - 1);
 
 const player = new Player();
