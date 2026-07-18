@@ -26,6 +26,32 @@ interface QuestSave extends QuestProgress {
 let defs: QuestDef[] = [];
 let progress: QuestSave = { accepted: [], completed: [], starlight: 0 };
 let tracker: HTMLDivElement | null = null;
+let starlightChip: HTMLDivElement | null = null;
+let celebrateEl: HTMLDivElement | null = null;
+let celebrateTimer = 0;
+let eventsRef: import('../events.ts').EventBus | null = null;
+
+/** HUDの✨表示を書き直し、増えた瞬間はぽんと弾ませる */
+function refreshStarlight(bump: boolean): void {
+  if (!starlightChip) return;
+  starlightChip.textContent = `✨ ${progress.starlight}`;
+  if (bump) {
+    starlightChip.classList.remove('bump');
+    void starlightChip.offsetWidth; // アニメーションを最初から再生し直す
+    starlightChip.classList.add('bump');
+  }
+}
+
+/** 達成のお祝いトースト(依頼・お手伝いの完了で使う) */
+export function celebrate(text: string): void {
+  if (!celebrateEl) return;
+  celebrateEl.textContent = text;
+  celebrateEl.classList.remove('show');
+  void celebrateEl.offsetWidth;
+  celebrateEl.classList.add('show');
+  window.clearTimeout(celebrateTimer);
+  celebrateTimer = window.setTimeout(() => celebrateEl?.classList.remove('show'), 3000);
+}
 
 const save = () => saveFeatureData('quests', VERSION, progress);
 
@@ -48,6 +74,9 @@ export function completeQuest(quest: QuestDef): boolean {
   progress.starlight += quest.starlight;
   save();
   refreshTracker();
+  refreshStarlight(true);
+  celebrate(`依頼をはたした! ✨星あかり +${quest.starlight}`);
+  eventsRef?.emit('starlight-changed', { count: progress.starlight });
   return true;
 }
 
@@ -60,6 +89,8 @@ export function starlightCount(): number {
 export function addStarlight(count: number): void {
   progress.starlight += count;
   save();
+  refreshStarlight(true);
+  eventsRef?.emit('starlight-changed', { count: progress.starlight });
 }
 
 /** HUD左下の依頼メモを書き直す */
@@ -91,9 +122,23 @@ export const questsFeature: Feature = {
     const saved = loadFeatureData<QuestSave>('quests', VERSION);
     if (saved) progress = saved;
 
+    eventsRef = ctx.events;
     tracker = document.createElement('div');
     tracker.id = 'quest-tracker';
     document.body.appendChild(tracker);
+
+    // HUD右上の星あかり(報酬の貯まりが常に見える。気球の旅に使う)
+    starlightChip = document.createElement('div');
+    starlightChip.id = 'starlight-chip';
+    starlightChip.className = 'hud-chip';
+    starlightChip.title = '星あかり — 気球の旅に使う';
+    (document.querySelector('#hud-buttons') ?? document.body).appendChild(starlightChip);
+    refreshStarlight(false);
+
+    // 達成のお祝いトースト
+    celebrateEl = document.createElement('div');
+    celebrateEl.id = 'quest-celebrate';
+    document.body.appendChild(celebrateEl);
 
     // 依頼の定義は章ごとに遅延読み込み(まとめて読まない行儀。設計書§6)
     void import('../../content/quests/chapter1.ts').then((chapter) => {

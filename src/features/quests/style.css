@@ -32,3 +32,60 @@
     bottom: 156px;
   }
 }
+
+/* HUD右上の星あかり(ボタンではない表示) */
+.hud-chip {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  color: #ffe9a8;
+  background: rgba(10, 16, 40, 0.55);
+  border: 1px solid rgba(255, 233, 168, 0.35);
+  border-radius: 8px;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  user-select: none;
+}
+
+#starlight-chip.bump {
+  animation: starlight-bump 0.5s ease-out;
+}
+
+@keyframes starlight-bump {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.25);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* 依頼・お手伝い達成のお祝いトースト(画面上部中央) */
+#quest-celebrate {
+  position: fixed;
+  left: 50%;
+  top: 60px;
+  transform: translate(-50%, -8px);
+  padding: 10px 22px;
+  color: #4a3a2c;
+  background: rgba(255, 252, 242, 0.97);
+  border: 1.5px solid rgba(232, 201, 79, 0.8);
+  border-radius: 999px;
+  box-shadow: 0 4px 18px rgba(232, 201, 79, 0.25);
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s, transform 0.3s;
+  z-index: 12;
+}
+
+#quest-celebrate.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}

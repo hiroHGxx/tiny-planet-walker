@@ -7,7 +7,7 @@ import { itemName } from '../../content/items.ts';
 import type { Feature, FeatureContext } from '../feature.ts';
 import { addInteractable } from '../interact/index.ts';
 import { getItemCount, consumeItems, grantItem } from '../pouch/index.ts';
-import { addStarlight } from '../quests/index.ts';
+import { addStarlight, celebrate } from '../quests/index.ts';
 import { loadFeatureData, saveFeatureData } from '../save.ts';
 import { currentDay } from '../clock.ts';
 import { yawTowards } from '../../town.ts';
@@ -195,6 +195,10 @@ export const boardFeature: Feature = {
             errand.done = true;
             addStarlight(errand.starlight);
             if (errand.seed) grantItem('seed_mix');
+            celebrate(
+              `おてつだいをとどけた! ✨星あかり +${errand.starlight}` +
+                (errand.seed ? '・ふしぎな種' : '')
+            );
             save();
             ctx.events.emit('quest-completed', { questId: `errand-${errand.item}` });
             refreshPanel();

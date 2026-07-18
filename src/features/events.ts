@@ -25,6 +25,8 @@ export interface GameEvents {
   'letter-found': { letterId: string };
   /** 天気が変わった */
   'weather-changed': { weather: 'sunny' | 'cloudy' | 'rain' | 'fog' };
+  /** 星あかりの数が変わった */
+  'starlight-changed': { count: number };
   /** 星の上 ⇄ 家の中 の切り替えが起きた */
   'scene-changed': { scene: 'planet' | 'interior' };
 }
