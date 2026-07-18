@@ -657,8 +657,10 @@ function buildCharacter(): { root: THREE.Group; limbs: CharacterLimbs } {
   const strapGeometry = flatGeometry(new THREE.BoxGeometry(0.04, 0.02, 0.26));
   for (const x of [-0.1, 0.1]) {
     const strap = new THREE.Mesh(strapGeometry, shoes);
-    strap.position.set(x, 0.19, -0.16);
-    strap.rotation.x = -0.25; // 肩の上から胸側へ少し下ろす
+    // 後ろ端がリュックの上端より上にのぞくと、背面から
+    // 「後頭部の茶色い点」に見える(2026-07-18の不具合)ため低めに通す
+    strap.position.set(x, 0.13, -0.16);
+    strap.rotation.x = -0.5; // 肩の上から胸側へ下ろす(前側は肩に掛かる高さ)
     backpack.add(strap);
   }
   root.add(backpack);
