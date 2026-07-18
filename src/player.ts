@@ -269,9 +269,18 @@ function createFaceTexture(): THREE.CanvasTexture {
     ctx.fill();
   }
 
-  // 注意:このテクスチャは頭の球へぐるりと貼られる。顔の中心から離れた
-  // 描き込み(眉・眼鏡のつる等)は、後頭部や側頭部の髪の隙間に露出するため描かない
+  // 注意:このテクスチャは頭の球へぐるりと貼られる。顔の中心から大きく離れた
+  // 描き込みは側頭部〜後頭部に回り込むため、±100px程度に収めること
   ctx.lineCap = 'round';
+
+  // 眉(眼鏡の上にのぞく、細い茶色の弧。キャラクターシート準拠)
+  ctx.strokeStyle = '#8a6a3a';
+  ctx.lineWidth = 4;
+  for (const side of [-1, 1]) {
+    ctx.beginPath();
+    ctx.ellipse(faceX + side * eyeDX, eyeY - 26, 26, 14, 0, Math.PI * 1.2, Math.PI * 1.8);
+    ctx.stroke();
+  }
 
   // 目(キャラクターシートの大きな琥珀の瞳。縁取り+上まぶたの影+グラデーション)
   for (const side of [-1, 1]) {
@@ -561,29 +570,25 @@ function buildCharacter(): { root: THREE.Group; limbs: CharacterLimbs } {
   hairBall.scale.set(1.09, 0.96, 1.0); // 髪の横幅を広げ、相対的に顔を小さく見せる
   head.add(hairBall);
 
-  // 前髪:下へ落ちる房(先細りの円錐)を5本並べる。
-  // 長さ・太さ・厚み・傾きを房ごとに少しずつ変えて、
-  // 均一な板や束に見えないようにする
-  const strandSpecs: Array<[number, number, number, number, number, number, boolean]> = [
-    // [x, 房の長さ, z, 房の太さ, 傾き(rad), 厚み, 明るい色の房か]
-    // どの房も細い円錐だと「1本の毛」の線に見えてしまうため、
-    // 5本すべてを幅のある房(半径0.085以上)にして隣と重ねる
-    [0, 0.16, -0.2, 0.095, 0, 0.5, false], // 中央
-    [-0.09, 0.13, -0.198, 0.085, 0.08, 0.45, true],
-    [0.09, 0.14, -0.195, 0.085, -0.07, 0.5, false],
-    [-0.17, 0.17, -0.15, 0.09, 0.15, 0.5, false],
-    [0.17, 0.15, -0.155, 0.09, -0.12, 0.45, true],
+  // 前髪:参考絵のやわらかい丸い房(つぶした球)を並べてスカラップにする。
+  // 円錐だと先細りの毛先が「1本の毛」やギザギザの歯に見えてしまう。
+  // 房の下端は眼鏡の上端(y≈0.09)より上に置くこと
+  const lockGeometry = flatGeometry(new THREE.SphereGeometry(1, 7, 5));
+  const lockSpecs: Array<[number, number, number, number, number, boolean]> = [
+    // [x, 房の下端y, 幅, 高さ, z, 明るい色の房か]
+    [0, 0.1, 0.078, 0.16, -0.2, false], // 中央:いちばん下まで
+    [-0.085, 0.115, 0.07, 0.14, -0.198, true],
+    [0.085, 0.11, 0.074, 0.15, -0.196, false],
+    [-0.16, 0.105, 0.075, 0.15, -0.168, false],
+    [0.16, 0.11, 0.07, 0.14, -0.17, true],
+    [-0.225, 0.12, 0.06, 0.13, -0.125, true],
+    [0.225, 0.115, 0.062, 0.14, -0.128, false],
   ];
-  for (const [x, len, z, r, tilt, depth, light] of strandSpecs) {
-    const strand = new THREE.Mesh(
-      flatGeometry(new THREE.ConeGeometry(r, len, 5)),
-      light ? hairLight : hair
-    );
-    strand.rotation.x = Math.PI; // 先端を下へ向ける
-    strand.rotation.z = tilt; // 房ごとに毛先の流れる向きを変える
-    strand.position.set(x, 0.2 - len / 2, z); // 上端は髪の土台に隠す
-    strand.scale.z = depth; // おでこに沿わせて薄くする(房ごとに厚みを変える)
-    head.add(strand);
+  for (const [x, bottom, w, h, z, light] of lockSpecs) {
+    const lock = new THREE.Mesh(lockGeometry, light ? hairLight : hair);
+    lock.scale.set(w, h / 2, 0.048);
+    lock.position.set(x, bottom + h / 2, z);
+    head.add(lock);
   }
 
   // 横髪:頬を包みながら裾が外へ広がる房
