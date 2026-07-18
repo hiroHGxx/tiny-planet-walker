@@ -555,7 +555,9 @@ function buildCharacter(): { root: THREE.Group; limbs: CharacterLimbs } {
 
   // ボブの土台(頭より大きい球を後ろ上へずらし、顔まわりだけ出す)
   const hairBall = new THREE.Mesh(flatGeometry(new THREE.SphereGeometry(0.275, 9, 7)), hair);
-  hairBall.position.set(0, 0.05, 0.05);
+  // 低すぎるとギザギザの縁の「歯」が1本、眼鏡の上に垂れた毛のように見える
+  // (2026-07-18に長く追った不具合の真犯人)。少し上・後ろに保つこと
+  hairBall.position.set(0, 0.08, 0.08);
   hairBall.scale.set(1.09, 0.96, 1.0); // 髪の横幅を広げ、相対的に顔を小さく見せる
   head.add(hairBall);
 
@@ -659,7 +661,7 @@ function buildCharacter(): { root: THREE.Group; limbs: CharacterLimbs } {
     const strap = new THREE.Mesh(strapGeometry, shoes);
     // 後ろ端がリュックの上端より上にのぞくと、背面から
     // 「後頭部の茶色い点」に見える(2026-07-18の不具合)ため低めに通す
-    strap.position.set(x, 0.13, -0.16);
+    strap.position.set(x, 0.05, -0.16);
     strap.rotation.x = -0.5; // 肩の上から胸側へ下ろす(前側は肩に掛かる高さ)
     backpack.add(strap);
   }
