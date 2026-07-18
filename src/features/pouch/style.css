@@ -1,0 +1,82 @@
+/* 薬草ポーチ(F2)。図鑑と同じ生成りの紙調 */
+#pouch-panel {
+  display: none;
+  position: fixed;
+  top: 56px;
+  right: 12px;
+  width: min(260px, calc(100vw - 24px));
+  max-height: calc(100vh - 80px);
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: 14px 16px 10px;
+  color: #4a3a2c;
+  background: rgba(255, 252, 242, 0.96);
+  border: 1px solid rgba(74, 58, 44, 0.3);
+  border-radius: 14px;
+  box-shadow: 0 6px 24px rgba(7, 11, 26, 0.35);
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 13px;
+}
+
+#pouch-panel.open {
+  display: block;
+  animation: pouch-open 0.18s ease-out;
+}
+
+@keyframes pouch-open {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.pouch-title {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  margin-bottom: 6px;
+}
+
+.pouch-empty {
+  padding: 8px 0 10px;
+  line-height: 1.6;
+  opacity: 0.7;
+}
+
+.pouch-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 0;
+  border-top: 1px dashed rgba(74, 58, 44, 0.25);
+}
+
+.pouch-icon {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 35%, #eef3da, #dbe7c4);
+  border: 1px solid rgba(74, 58, 44, 0.2);
+  overflow: hidden;
+}
+
+.pouch-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.pouch-name {
+  flex: 1;
+  font-weight: 600;
+}
+
+.pouch-count {
+  font-weight: 700;
+  color: #7a5a36;
+}

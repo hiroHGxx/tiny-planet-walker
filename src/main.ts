@@ -8,6 +8,9 @@ import { createEffects } from './effects.ts';
 import { SpeechBubbles } from './dialogue.ts';
 import { createJournal } from './journal.ts';
 import { createAmbientAudio } from './audio.ts';
+import { EventBus } from './features/events.ts';
+import { FEATURES } from './features/registry.ts';
+import type { FeatureContext } from './features/feature.ts';
 
 // --- レンダラーとシーン ---
 const canvas = document.querySelector<HTMLCanvasElement>('#app')!;
@@ -59,10 +62,25 @@ const followCamera = new FollowCamera(window.innerWidth / window.innerHeight, ca
 // ポストプロセス(輪郭線・ブルーム・ビネット)
 const effects = createEffects(renderer, scene, followCamera.camera);
 
-// 村人のつぶやき・薬草図鑑・環境音
+// 村人のつぶやき・薬草図鑑・環境音・機能間のイベントバス
+const events = new EventBus();
 const speechBubbles = new SpeechBubbles(world.npcs, followCamera.camera);
-const journal = createJournal(world.herbSightings);
+const journal = createJournal(world.herbSightings, events);
 const ambientAudio = createAmbientAudio();
+
+// --- v2の機能(Feature)群 ---
+// 一覧はregistry.ts。プレイヤー地点の太陽の高さは毎フレームここへ書き込む
+let currentSunElevation = 1;
+const featureContext: FeatureContext = {
+  scene,
+  player,
+  camera: followCamera.camera,
+  world,
+  events,
+  audio: ambientAudio,
+  sunElevation: () => currentSunElevation,
+};
+for (const feature of FEATURES) feature.setup(featureContext);
 
 // --- キー入力 ---
 const pressed = new Set<string>();
@@ -186,9 +204,13 @@ renderer.setAnimationLoop(() => {
   // つぶやき・図鑑・環境音は、プレイヤー地点の昼夜に合わせて動く
   playerDirection.copy(player.mesh.position).normalize();
   const sunElevation = getSunElevation(playerDirection);
+  currentSunElevation = sunElevation;
   speechBubbles.update(deltaTime, player.mesh.position, sunElevation);
   journal.update(deltaTime, playerDirection);
   ambientAudio.update(deltaTime, input.x !== 0 || input.z !== 0, sunElevation);
+
+  // v2の機能群を更新する
+  for (const feature of FEATURES) feature.update?.(deltaTime, featureContext);
 
   effects.render(); // ポストプロセス込みで描画する
 });

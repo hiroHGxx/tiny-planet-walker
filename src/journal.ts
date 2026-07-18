@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { PLANET_RADIUS } from './palette.ts';
+import type { EventBus } from './features/events.ts';
 
 /**
  * 薬草図鑑。
@@ -14,6 +15,8 @@ export interface HerbSighting {
   direction: THREE.Vector3;
   /** 種類ID(HERB_SPECIES の id) */
   species: string;
+  /** 株の3Dオブジェクト(摘む演出に使う。テストでは省略可) */
+  mesh?: THREE.Group;
 }
 
 /** 図鑑に載る薬草の種類(idはworld.tsのファクトリ対応表と揃える) */
@@ -60,7 +63,7 @@ export const HERB_SPECIES: ReadonlyArray<{ id: string; name: string; note: strin
  * 画像ファイルは使わず、星に生えている株の姿をコードで描き起こす。
  * 色は palette.ts の植物色(茎・葉・花びら・実)に合わせている。
  */
-const HERB_ICONS: Readonly<Record<string, string>> = {
+export const HERB_ICONS: Readonly<Record<string, string>> = {
   roundleaf: `<svg viewBox="0 0 40 40">
     <path d="M20 36 V12 M20 30 Q14 27 10 22 M20 26 Q26 24 30 20" fill="none" stroke="#4c7a3d" stroke-width="2.4" stroke-linecap="round"/>
     <circle cx="20" cy="9" r="5.5" fill="#79ad63"/>
@@ -136,7 +139,7 @@ export interface Journal {
   discoveredCount(): number;
 }
 
-export function createJournal(sightings: readonly HerbSighting[]): Journal {
+export function createJournal(sightings: readonly HerbSighting[], events?: EventBus): Journal {
   const discovered = new Set<string>(loadDiscovered());
   // まだ見つけていない種類の株だけを残し、毎フレームの判定を軽くする
   let pending = sightings.filter((sighting) => !discovered.has(sighting.species));
@@ -226,6 +229,7 @@ export function createJournal(sightings: readonly HerbSighting[]): Journal {
         saveDiscovered(discovered);
         const species = HERB_SPECIES.find((entry) => entry.id === sighting.species);
         if (species) toastQueue.push(`「${species.name}」を見つけた! 図鑑に記録した`);
+        events?.emit('herb-discovered', { species: sighting.species });
         // 同じ種類の株はもう判定しなくてよい
         pending = pending.filter((entry) => entry.species !== sighting.species);
         refresh();

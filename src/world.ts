@@ -436,6 +436,7 @@ export function createWorld(scene: THREE.Scene): World {
       herbSightings.push({
         direction: flower.position.clone().normalize(),
         species: HERB_SPECIES_ID.get(factory)!,
+        mesh: flower,
       });
     }
   }
@@ -765,6 +766,7 @@ function addHerbClusters(
       sightings.push({
         direction: herb.position.clone().normalize(),
         species: HERB_SPECIES_ID.get(factory)!,
+        mesh: herb,
       });
     }
     // 群生地の脇に、小さな花のかたまりを添える
@@ -778,6 +780,7 @@ function addHerbClusters(
       sightings.push({
         direction: flower.position.clone().normalize(),
         species: HERB_SPECIES_ID.get(createSmallFlower)!,
+        mesh: flower,
       });
     }
   }
@@ -980,6 +983,7 @@ function addShopArea(
     sightings.push({
       direction: herb.position.clone().normalize(),
       species: HERB_SPECIES_ID.get(factory)!,
+      mesh: herb,
     });
   }
 

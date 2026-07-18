@@ -33,6 +33,28 @@ const MELODY: ReadonlyArray<readonly [number, number]> = [
   [72, 3], [0, 1], // ドーー(休)
 ];
 
+/** 夜のメロディの1拍(昼よりゆっくり) */
+const NIGHT_BEAT = 0.58;
+/**
+ * 夜のメロディ。イ短調ペンタトニック(ラドレミソ)で、低めの音域を
+ * ゆったり下りていく子守唄。昼と同じ形式でループする。
+ */
+const MELODY_NIGHT: ReadonlyArray<readonly [number, number]> = [
+  [76, 2], [74, 1], [72, 1], [69, 2], [72, 2], // ミー レ ド ラー ドー
+  [74, 2], [72, 1], [69, 1], [67, 2], [0, 2], // レー ド ラ ソー (休)
+  [64, 2], [67, 1], [69, 1], [72, 2], [69, 2], // 低いミー ソ ラ ドー ラー
+  [69, 3], [0, 3], // ラーー (休)
+];
+
+/** 出来事に添える小さなジングル([MIDIノート, 開始オフセット秒]の列) */
+export type JingleKind = 'discover' | 'pick' | 'quest' | 'craft';
+const JINGLES: Record<JingleKind, ReadonlyArray<readonly [number, number]>> = {
+  discover: [[76, 0], [81, 0.12], [84, 0.24]], // 見つけた!(上っていく3音)
+  pick: [[84, 0]], // 摘んだ(小さなひと粒)
+  quest: [[72, 0], [76, 0.14], [79, 0.28], [84, 0.42]], // 依頼達成のファンファーレ
+  craft: [[79, 0], [76, 0.12], [81, 0.24]], // 調合完了(ころんとした3音)
+};
+
 /** MIDIノート番号を周波数(Hz)にする */
 function noteToFrequency(midi: number): number {
   return 440 * 2 ** ((midi - 69) / 12);
@@ -44,6 +66,10 @@ export interface AmbientAudio {
    * sunElevation: プレイヤー地点での太陽の高さ(1=真昼、-1=真夜中)
    */
   update(deltaTime: number, moving: boolean, sunElevation: number): void;
+  /** 場面に合わせた小さなジングルを鳴らす(音が始まる前・ミュート中は何もしない) */
+  playJingle(kind: JingleKind): void;
+  /** BGMのメロディを昼用/夜用に切り替える(次に予約する音から反映) */
+  setMelodyMode(mode: 'day' | 'night'): void;
 }
 
 export function createAmbientAudio(): AmbientAudio {
@@ -57,6 +83,7 @@ export function createAmbientAudio(): AmbientAudio {
   // メロディの予約状況(次に鳴らす音の開始時刻と、メロディ内の位置)
   let melodyIndex = 0;
   let nextNoteTime = 0;
+  let melodyMode: 'day' | 'night' = 'day';
 
   let muted = false;
   try {
@@ -139,12 +166,12 @@ export function createAmbientAudio(): AmbientAudio {
   window.addEventListener('keydown', unlock);
 
   /** メロディの1音:オルゴール風に、基音+1オクターブ上を重ねて減衰させる */
-  const playMelodyNote = (midi: number, start: number, duration: number) => {
+  const playMelodyNote = (midi: number, start: number, duration: number, level = 0.055) => {
     if (!context || !melodyOut) return;
     const frequency = noteToFrequency(midi);
     const gain = context.createGain();
     gain.gain.setValueAtTime(0, start);
-    gain.gain.linearRampToValueAtTime(0.055, start + 0.02);
+    gain.gain.linearRampToValueAtTime(level, start + 0.02);
     gain.gain.exponentialRampToValueAtTime(0.0005, start + duration + 0.6);
     gain.connect(melodyOut);
     const tone = context.createOscillator();
@@ -168,13 +195,15 @@ export function createAmbientAudio(): AmbientAudio {
   /** メロディを少し先まで予約する。ループの終わりまで来たら先頭へ戻る */
   const scheduleMelody = () => {
     if (!context) return;
+    const melody = melodyMode === 'day' ? MELODY : MELODY_NIGHT;
+    const beat = melodyMode === 'day' ? BEAT : NIGHT_BEAT;
     // ミュート明けやタブ復帰で予約時刻が過去になっていたら、今から仕切り直す
     if (nextNoteTime < context.currentTime) nextNoteTime = context.currentTime + 0.2;
     while (nextNoteTime < context.currentTime + 0.6) {
-      const [midi, beats] = MELODY[melodyIndex]!;
-      if (midi > 0) playMelodyNote(midi, nextNoteTime, beats * BEAT);
-      nextNoteTime += beats * BEAT;
-      melodyIndex = (melodyIndex + 1) % MELODY.length;
+      const [midi, beats] = melody[melodyIndex % melody.length]!;
+      if (midi > 0) playMelodyNote(midi, nextNoteTime, beats * beat);
+      nextNoteTime += beats * beat;
+      melodyIndex = (melodyIndex + 1) % melody.length;
     }
   };
 
@@ -290,6 +319,21 @@ export function createAmbientAudio(): AmbientAudio {
       } else {
         stepTimer = STEP_INTERVAL * 0.8; // 歩き出してすぐ最初の一歩が鳴る
       }
+    },
+
+    playJingle(kind: JingleKind): void {
+      if (!context || muted || context.state !== 'running') return;
+      const start = context.currentTime + 0.02;
+      for (const [midi, offset] of JINGLES[kind]) {
+        // 摘んだ音は控えめに、それ以外はメロディと同じ大きさで
+        playMelodyNote(midi, start + offset, 0.18, kind === 'pick' ? 0.03 : 0.055);
+      }
+    },
+
+    setMelodyMode(mode: 'day' | 'night'): void {
+      if (mode === melodyMode) return;
+      melodyMode = mode;
+      melodyIndex = 0; // 次の予約から新しいメロディの先頭に入る
     },
   };
 }

@@ -14,6 +14,11 @@ npm run dev   # http://localhost:5173/tiny-planet-walker/ (baseパスに注意)
 Chrome自動操作(claude-in-chromeツール)でこのURLを開く。
 拡張が未接続なら `open -a "Google Chrome"` してから再試行する。
 
+**最初にタイトル画面が出る。** `#title-start`(はじめる)をクリックするまで
+移動キーはcaptureで堰き止められているので、検証は必ず
+`document.querySelector('#title-start').click()` から始めること。
+このクリックがAudioContextの解錠も兼ねる。
+
 ## 操作の再現方法
 
 - **移動**: 合成キーイベントで動く。keydownを1回送れば押しっぱなし扱いになり、

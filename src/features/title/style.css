@@ -1,0 +1,104 @@
+/* タイトル画面(F16)。世界を薄く透かした上に紙調の題字を重ねる */
+#title-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(
+    ellipse at 50% 42%,
+    rgba(7, 11, 26, 0.35),
+    rgba(7, 11, 26, 0.78)
+  );
+  transition: opacity 0.6s ease;
+}
+
+#title-screen.closing {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.title-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 36px 44px;
+  text-align: center;
+  color: #fffcf2;
+  background: rgba(10, 16, 40, 0.35);
+  border: 1px solid rgba(255, 252, 242, 0.25);
+  border-radius: 18px;
+  backdrop-filter: blur(2px);
+}
+
+.title-heading {
+  margin: 0;
+  font-family: 'Hiragino Mincho ProN', 'Yu Mincho', 'Noto Serif JP', serif;
+  font-size: 44px;
+  font-weight: 600;
+  letter-spacing: 0.35em;
+  /* 中央寄せの字間調整(最後の字の右余白ぶん) */
+  text-indent: 0.35em;
+  text-shadow: 0 2px 18px rgba(7, 11, 26, 0.8);
+}
+
+.title-subtitle {
+  font-family: 'Hiragino Mincho ProN', 'Yu Mincho', 'Noto Serif JP', serif;
+  font-size: 15px;
+  letter-spacing: 0.18em;
+  opacity: 0.85;
+  margin-bottom: 14px;
+}
+
+#title-start {
+  padding: 12px 44px;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-indent: 0.2em;
+  color: #4a3a2c;
+  background: rgba(255, 252, 242, 0.95);
+  border: 1px solid rgba(74, 58, 44, 0.3);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+#title-start:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(7, 11, 26, 0.4);
+}
+
+#title-reset {
+  padding: 6px 14px;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 12px;
+  color: rgba(255, 252, 242, 0.7);
+  background: none;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+#title-reset.armed {
+  color: #f0b8a8;
+}
+
+.title-hint {
+  margin-top: 8px;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 12px;
+  opacity: 0.65;
+}
+
+/* タッチ端末では操作説明を出し分ける余裕がないので短く隠す */
+@media (pointer: coarse) {
+  .title-hint {
+    display: none;
+  }
+}
