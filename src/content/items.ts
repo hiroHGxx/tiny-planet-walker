@@ -51,7 +51,37 @@ export const POTIONS: ReadonlyArray<ItemDef> = [
   { id: 'drops_bud', name: 'つぼみのしずく', icon: bottleIcon('#9fc9dd', '#4c7a3d') },
 ];
 
-/** すべてのアイテム(薬草+薬) */
+/** 採取・お手伝いで手に入るもの(薬草・薬以外) */
+export const GOODS: ReadonlyArray<ItemDef> = [
+  {
+    id: 'wool',
+    name: 'ひつじの毛',
+    icon: `<svg viewBox="0 0 40 40">
+      <circle cx="15" cy="20" r="7.5" fill="#f5efd7"/><circle cx="24" cy="16" r="7" fill="#fffcf2"/>
+      <circle cx="26" cy="24" r="6.5" fill="#f5efd7"/><circle cx="18" cy="26" r="6" fill="#fffcf2"/>
+    </svg>`,
+  },
+  {
+    id: 'water',
+    name: '湖の水',
+    icon: `<svg viewBox="0 0 40 40">
+      <path d="M13 8 H27 L25 32 Q20 34 15 32 Z" fill="#bcd8e6"/>
+      <path d="M14.5 18 H25.5 L24.7 31 Q20 32.8 15.8 31 Z" fill="#74aec9"/>
+      <ellipse cx="20" cy="8" rx="7" ry="2" fill="#dfeaf2"/>
+    </svg>`,
+  },
+  {
+    id: 'seed_mix',
+    name: 'ふしぎな種',
+    icon: `<svg viewBox="0 0 40 40">
+      <path d="M12 10 Q10 24 20 26 Q30 24 28 10 Q20 16 12 10 Z" fill="#b08968"/>
+      <circle cx="17" cy="17" r="1.6" fill="#6d4a2f"/><circle cx="23" cy="15" r="1.4" fill="#6d4a2f"/>
+      <circle cx="20" cy="21" r="1.4" fill="#6d4a2f"/>
+    </svg>`,
+  },
+];
+
+/** すべてのアイテム(薬草+薬+採取物) */
 export const ITEMS: ReadonlyArray<ItemDef> = [
   ...HERB_SPECIES.map((species) => ({
     id: species.id,
@@ -59,6 +89,7 @@ export const ITEMS: ReadonlyArray<ItemDef> = [
     icon: HERB_ICONS[species.id] ?? '',
   })),
   ...POTIONS,
+  ...GOODS,
 ];
 
 const byId = new Map(ITEMS.map((item) => [item.id, item]));

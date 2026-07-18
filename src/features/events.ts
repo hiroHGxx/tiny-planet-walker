@@ -21,6 +21,10 @@ export interface GameEvents {
   'quest-completed': { questId: string };
   /** 調合台で薬を作った */
   'craft-done': { recipeId: string };
+  /** 手紙の断片を拾った */
+  'letter-found': { letterId: string };
+  /** 天気が変わった */
+  'weather-changed': { weather: 'sunny' | 'cloudy' | 'rain' | 'fog' };
   /** 星の上 ⇄ 家の中 の切り替えが起きた */
   'scene-changed': { scene: 'planet' | 'interior' };
 }

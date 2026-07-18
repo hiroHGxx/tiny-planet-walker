@@ -5,6 +5,7 @@ import type { Feature, FeatureContext } from '../feature.ts';
 import { addInteractable } from '../interact/index.ts';
 import { loadFeatureData, saveFeatureData } from '../save.ts';
 import { currentDay } from '../clock.ts';
+import { currentPlanet } from '../planet-state.ts';
 import type { EventBus } from '../events.ts';
 
 /**
@@ -15,7 +16,7 @@ import type { EventBus } from '../events.ts';
  * getItemCount / grantItem / consumeItems を公開している(土台API)。
  */
 
-const VERSION = 1;
+const VERSION = 2;
 /** この表面距離まで近づいたら摘める(図鑑の発見1.7より少し狭い) */
 const PICK_DISTANCE = 1.5;
 /** 摘んだ株が再生するまでのゲーム内日数 */
@@ -25,6 +26,12 @@ const SCALE_SPEED = 3.5;
 
 interface PouchSave {
   counts: Record<string, number>;
+}
+
+/** 摘んだ株の記録は星ごとに分ける(株のindexは星のたねに紐づくため) */
+const pickedKey = () => `pouch-picked-p${currentPlanet()}`;
+
+interface PickedSave {
   picked: Array<{ index: number; day: number }>;
 }
 
@@ -43,10 +50,10 @@ let refreshPanel: () => void = () => {};
 let anims: ScaleAnim[] = [];
 
 const save = () => {
-  saveFeatureData('pouch', VERSION, {
-    counts,
+  saveFeatureData('pouch', VERSION, { counts } satisfies PouchSave);
+  saveFeatureData(pickedKey(), 1, {
     picked: [...picked.entries()].map(([index, day]) => ({ index, day })),
-  } satisfies PouchSave);
+  } satisfies PickedSave);
 };
 
 /** いま持っている数(依頼・調合の判定に使う) */
@@ -82,7 +89,8 @@ export const pouchFeature: Feature = {
     eventsRef = ctx.events;
     const saved = loadFeatureData<PouchSave>('pouch', VERSION);
     counts = saved?.counts ?? {};
-    picked = new Map(saved?.picked.map((entry) => [entry.index, entry.day]) ?? []);
+    const savedPicked = loadFeatureData<PickedSave>(pickedKey(), 1);
+    picked = new Map(savedPicked?.picked.map((entry) => [entry.index, entry.day]) ?? []);
 
     anims = [];
     const animByIndex = new Map<number, ScaleAnim>();

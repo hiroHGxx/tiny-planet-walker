@@ -128,13 +128,14 @@ export class Npc {
     for (let attempt = 0; attempt < 8; attempt++) {
       _jitter
         .set(this.rand() - 0.5, this.rand() - 0.5, this.rand() - 0.5)
-        .multiplyScalar(2 * WANDER_RADIUS);
+        .multiplyScalar(2 * WANDER_RADIUS * (this.nightCalm ? 0.3 : 1));
       this.target.copy(this.home).add(_jitter).normalize();
       // いまいる場所から十分離れていれば採用(その場で足踏みしない)
       _up.copy(this.mesh.position).normalize();
       if (_up.dot(this.target) < Math.cos(0.02)) {
         this.state = 'walk';
-        this.walkSpeed = BASE_WALK_SPEED * (0.8 + this.rand() * 0.5); // 散歩ごとにゆらす
+        this.walkSpeed =
+          BASE_WALK_SPEED * (0.8 + this.rand() * 0.5) * (this.nightCalm ? 0.6 : 1);
         this.stuckTimer = 0;
         this.lastProgressPosition.copy(this.mesh.position);
         return;
@@ -153,6 +154,13 @@ export class Npc {
 
   /** 会話中フラグ。立ち止まり、キョロキョロもやめて相手の方を向く */
   private held = false;
+
+  /** 夜の落ち着きモード(家の近くにとどまり、ゆっくり歩く) */
+  private nightCalm = false;
+
+  setNightCalm(calm: boolean): void {
+    this.nightCalm = calm;
+  }
 
   /**
    * 話しかけられた:立ち止まって towards(プレイヤー位置の方向)を向く。

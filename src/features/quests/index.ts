@@ -51,9 +51,15 @@ export function completeQuest(quest: QuestDef): boolean {
   return true;
 }
 
-/** これまでに集めた星あかりの数(いずれF20「次の星へ」が使う) */
+/** これまでに集めた星あかりの数(F20「次の星へ」が使う) */
 export function starlightCount(): number {
   return progress.starlight;
+}
+
+/** 星あかりを直接足す(掲示板のお手伝い・ポストの贈り物など) */
+export function addStarlight(count: number): void {
+  progress.starlight += count;
+  save();
 }
 
 /** HUD左下の依頼メモを書き直す */

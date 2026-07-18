@@ -70,6 +70,8 @@ export interface AmbientAudio {
   playJingle(kind: JingleKind): void;
   /** BGMのメロディを昼用/夜用に切り替える(次に予約する音から反映) */
   setMelodyMode(mode: 'day' | 'night'): void;
+  /** 雨音の強さ(0=なし〜1=本降り)。天気の機能が呼ぶ */
+  setRainLevel(level: number): void;
 }
 
 export function createAmbientAudio(): AmbientAudio {
@@ -78,6 +80,8 @@ export function createAmbientAudio(): AmbientAudio {
   let melodyOut: GainNode | null = null;
   let windGain: GainNode | null = null;
   let windFilter: BiquadFilterNode | null = null;
+  let rainGain: GainNode | null = null;
+  let rainLevel = 0;
   let noiseBuffer: AudioBuffer | null = null;
 
   // メロディの予約状況(次に鳴らす音の開始時刻と、メロディ内の位置)
@@ -146,6 +150,19 @@ export function createAmbientAudio(): AmbientAudio {
     windGain.gain.value = 0.12;
     wind.connect(windFilter).connect(windGain).connect(master);
     wind.start();
+
+    // 雨:ノイズを高めのローパスに通した、風より明るいざあざあ音
+    const rain = context.createBufferSource();
+    rain.buffer = noiseBuffer;
+    rain.loop = true;
+    rain.playbackRate.value = 1.7;
+    const rainFilter = context.createBiquadFilter();
+    rainFilter.type = 'lowpass';
+    rainFilter.frequency.value = 1400;
+    rainGain = context.createGain();
+    rainGain.gain.value = 0;
+    rain.connect(rainFilter).connect(rainGain).connect(master);
+    rain.start();
 
     // BGMのメロディの出口。やわらかい残響(短いディレイの繰り返し)を添える
     melodyOut = context.createGain();
@@ -285,6 +302,12 @@ export function createAmbientAudio(): AmbientAudio {
       const target = muted ? 0 : MASTER_LEVEL;
       master.gain.value += (target - master.gain.value) * (1 - Math.exp(-4 * deltaTime));
 
+      // 雨音は目標の強さへゆっくり寄せる(天気の変わり目を柔らかく)
+      if (rainGain) {
+        rainGain.gain.value +=
+          (rainLevel * 0.22 - rainGain.gain.value) * (1 - Math.exp(-1.2 * deltaTime));
+      }
+
       // 風はメロディの邪魔をしない程度に、ゆっくり強弱をつけてそよがせる
       if (windGain && windFilter) {
         const gust =
@@ -334,6 +357,10 @@ export function createAmbientAudio(): AmbientAudio {
       if (mode === melodyMode) return;
       melodyMode = mode;
       melodyIndex = 0; // 次の予約から新しいメロディの先頭に入る
+    },
+
+    setRainLevel(level: number): void {
+      rainLevel = Math.max(0, Math.min(1, level));
     },
   };
 }

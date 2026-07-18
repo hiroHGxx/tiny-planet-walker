@@ -1,0 +1,71 @@
+/* 気球の行き先パネル(F20) */
+#planets-panel {
+  display: none;
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(380px, calc(100vw - 28px));
+  box-sizing: border-box;
+  padding: 18px 20px 14px;
+  color: #4a3a2c;
+  background: rgba(255, 252, 242, 0.97);
+  border: 1px solid rgba(74, 58, 44, 0.35);
+  border-radius: 16px;
+  box-shadow: 0 10px 32px rgba(7, 11, 26, 0.45);
+  font-family: system-ui, -apple-system, sans-serif;
+  z-index: 15;
+}
+
+#planets-panel.open {
+  display: block;
+}
+
+.planets-title {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.planets-starlight {
+  font-size: 13px;
+  color: #7a5a36;
+  margin: 4px 0 8px;
+}
+
+.planets-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-top: 1px dashed rgba(74, 58, 44, 0.25);
+  font-size: 14px;
+}
+
+.planets-name {
+  flex: 1;
+  font-weight: 600;
+}
+
+.planets-here {
+  font-size: 12px;
+  color: #4c7a3d;
+  font-weight: 700;
+}
+
+.planets-locked {
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+.planets-go {
+  padding: 7px 18px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fffcf2;
+  background: #7a9a5a;
+  border: 1px solid rgba(74, 58, 44, 0.3);
+  border-radius: 999px;
+  cursor: pointer;
+}

@@ -1,0 +1,29 @@
+/* なでたときのハート(F10)。ふわっと浮かんで消える */
+#heart-layer {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 6;
+}
+
+.float-heart {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  font-size: 20px;
+  animation: heart-float 1.05s ease-out forwards;
+}
+
+@keyframes heart-float {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -30%) scale(0.6);
+  }
+  25% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -160%) scale(1.1);
+  }
+}

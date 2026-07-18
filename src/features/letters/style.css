@@ -1,0 +1,113 @@
+/* 手紙の頁(F11):一覧パネルと読むモーダル(どちらも紙調) */
+#letters-panel {
+  display: none;
+  position: fixed;
+  top: 56px;
+  right: 12px;
+  width: min(240px, calc(100vw - 24px));
+  max-height: calc(100vh - 80px);
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: 14px 16px 10px;
+  color: #4a3a2c;
+  background: rgba(255, 252, 242, 0.96);
+  border: 1px solid rgba(74, 58, 44, 0.3);
+  border-radius: 14px;
+  box-shadow: 0 6px 24px rgba(7, 11, 26, 0.35);
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 13px;
+  z-index: 10;
+}
+
+#letters-panel.open {
+  display: block;
+}
+
+.letters-title {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  margin-bottom: 6px;
+}
+
+.letters-row {
+  padding: 7px 2px;
+  border-top: 1px dashed rgba(74, 58, 44, 0.25);
+  cursor: pointer;
+}
+
+.letters-row:hover {
+  background: rgba(122, 90, 54, 0.06);
+}
+
+.letters-row.missing {
+  opacity: 0.45;
+  cursor: default;
+}
+
+#letter-modal {
+  display: none;
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(420px, calc(100vw - 32px));
+  box-sizing: border-box;
+  padding: 22px 26px;
+  color: #4a3a2c;
+  background: rgba(255, 252, 242, 0.98);
+  border: 1px solid rgba(74, 58, 44, 0.35);
+  border-radius: 14px;
+  box-shadow: 0 10px 32px rgba(7, 11, 26, 0.45);
+  font-family: 'Hiragino Mincho ProN', 'Yu Mincho', serif;
+  z-index: 16;
+}
+
+#letter-modal.open {
+  display: block;
+  animation: letter-open 0.2s ease-out;
+}
+
+@keyframes letter-open {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -48%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+.letter-title {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  margin-bottom: 10px;
+}
+
+.letter-text {
+  margin: 0 0 8px;
+  font-size: 14px;
+  line-height: 2;
+}
+
+.letter-complete {
+  margin: 14px 0 0;
+  font-size: 13px;
+  text-align: center;
+  color: #7a5a36;
+}
+
+.letter-close {
+  display: block;
+  margin: 14px auto 0;
+  padding: 7px 26px;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 13px;
+  color: #7a5a36;
+  background: rgba(122, 90, 54, 0.1);
+  border: 1px solid rgba(74, 58, 44, 0.25);
+  border-radius: 999px;
+  cursor: pointer;
+}

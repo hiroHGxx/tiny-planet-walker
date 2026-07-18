@@ -427,20 +427,32 @@ function createDragonfly(rand: Rand): Insect {
  * 動物と虫をまとめてシーンに追加する。
  * 戻り値は毎フレームの更新関数(プレイヤーの方向で遠くの個体を止める)。
  */
+export type AnimalKind = 'bird' | 'rabbit' | 'sheep';
+
+/** なでる・毛を刈るの対象として外へ見せる動物の情報 */
+export interface WildAnimal {
+  mesh: THREE.Group;
+  kind: AnimalKind;
+}
+
 export function addWildlife(
   scene: THREE.Scene,
   rand: Rand,
   avoidDirections: Array<{ direction: THREE.Vector3; minDot: number }>,
   pastures: Array<{ direction: THREE.Vector3; count: number }> = []
-): (time: number, playerDirection: THREE.Vector3) => void {
+): {
+  update: (time: number, playerDirection: THREE.Vector3) => void;
+  animals: ReadonlyArray<WildAnimal>;
+} {
   // 地上の動物:鳥・うさぎ・ひつじを6体ずつ
-  const specs: Array<[(r: Rand) => THREE.Group, AnimalSpec]> = [
-    [buildBird, { speed: 1.1, hopHeight: 0.09, gaitFrequency: 11, wanderRadius: 0.09 }],
-    [buildRabbit, { speed: 1.7, hopHeight: 0.12, gaitFrequency: 9, wanderRadius: 0.1 }],
-    [buildSheep, { speed: 0.7, hopHeight: 0.02, gaitFrequency: 6, wanderRadius: 0.07 }],
+  const specs: Array<[(r: Rand) => THREE.Group, AnimalSpec, AnimalKind]> = [
+    [buildBird, { speed: 1.1, hopHeight: 0.09, gaitFrequency: 11, wanderRadius: 0.09 }, 'bird'],
+    [buildRabbit, { speed: 1.7, hopHeight: 0.12, gaitFrequency: 9, wanderRadius: 0.1 }, 'rabbit'],
+    [buildSheep, { speed: 0.7, hopHeight: 0.02, gaitFrequency: 6, wanderRadius: 0.07 }, 'sheep'],
   ];
   const animals: GroundAnimal[] = [];
-  for (const [build, spec] of specs) {
+  const exposed: WildAnimal[] = [];
+  for (const [build, spec, kind] of specs) {
     let placed = 0;
     let attempts = 0;
     while (placed < 6 && attempts < 100) {
@@ -453,6 +465,7 @@ export function addWildlife(
       const animal = new GroundAnimal(build(rand), spec, home, rand);
       scene.add(animal.mesh);
       animals.push(animal);
+      exposed.push({ mesh: animal.mesh, kind });
       placed++;
     }
   }
@@ -474,6 +487,7 @@ export function addWildlife(
       );
       scene.add(sheep.mesh);
       animals.push(sheep);
+      exposed.push({ mesh: sheep.mesh, kind: 'sheep' });
     }
   }
 
@@ -486,7 +500,7 @@ export function addWildlife(
     scene.add(insect.root);
   }
 
-  return (time: number, playerDirection: THREE.Vector3) => {
+  const update = (time: number, playerDirection: THREE.Vector3) => {
     for (const animal of animals) animal.update(time, playerDirection);
     for (const insect of insects) {
       // 「現在時刻の経路上の位置」で可視判定する。
@@ -498,4 +512,5 @@ export function addWildlife(
       if (near) insect.update(time); // 姿勢・羽の更新は見えるときだけ
     }
   };
+  return { update, animals: exposed };
 }

@@ -30,7 +30,7 @@ import {
 } from './flora.ts';
 import { createShop } from './shop.ts';
 import { Npc } from './npc.ts';
-import { addWildlife } from './animals.ts';
+import { addWildlife, type WildAnimal } from './animals.ts';
 import {
   addRoads,
   addLake,
@@ -325,6 +325,8 @@ export function getSunElevation(direction: THREE.Vector3): number {
 
 /** createWorld の戻り値。update のほかに、つぶやき・図鑑が使う参照を持つ */
 export interface World {
+  /** なでる・毛を刈るの対象になる動物たち */
+  wildlife: ReadonlyArray<WildAnimal>;
   /** 「動く世界」を毎フレーム進める(playerPositionは距離カリングに使う) */
   update: (time: number, playerPosition: THREE.Vector3) => void;
   /** 村人(つぶやきの吹き出しが頭上の位置を参照する) */
@@ -339,13 +341,13 @@ export interface World {
  * 毎フレーム進める。playerPosition は、遠くのNPC・動物の
  * 描画とAIを止める距離カリングに使う。
  */
-export function createWorld(scene: THREE.Scene): World {
+export function createWorld(scene: THREE.Scene, planetIndex = 0): World {
   scene.add(createPlanet());
   scene.add(createSky());
   const { sun, fill } = addLights(scene);
   addStars(scene);
 
-  const rand = createRandom(20260714);
+  const rand = createRandom(20260714 + planetIndex * 7919);
   // 光る薬草の位置を集めておき、あとで光の粒を漂わせる
   const glowHerbPositions: THREE.Vector3[] = [];
   // 置いた薬草の方向と種類を集めておき、図鑑の発見判定に渡す
@@ -502,7 +504,7 @@ export function createWorld(scene: THREE.Scene): World {
 
   // 動物(鳥・うさぎ・ひつじ)と虫(ハチ・トンボ)を追加する。
   // 開始地点・薬屋・湖・丘の上には湧かせない
-  const updateWildlife = addWildlife(scene, rand, [
+  const wildlifeResult = addWildlife(scene, rand, [
     { direction: START_NORMAL, minDot: Math.cos(1.5 / PLANET_RADIUS) },
     { direction: SHOP_DIRECTION, minDot: Math.cos(2.5 / PLANET_RADIUS) },
     ...LAKES.map((lake) => ({
@@ -546,13 +548,13 @@ export function createWorld(scene: THREE.Scene): World {
     updateGlowParticles(time);
     grass.update(time);
     for (const npc of npcs) npc.update(time, _playerDirection);
-    updateWildlife(time, _playerDirection);
+    wildlifeResult.update(time, _playerDirection);
     updateClouds(time);
     updateButterflies(time);
     updateShootingStars(time);
   };
 
-  return { update, npcs, herbSightings };
+  return { update, npcs, herbSightings, wildlife: wildlifeResult.animals };
 }
 
 /**

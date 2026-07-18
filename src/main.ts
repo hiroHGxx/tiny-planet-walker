@@ -9,6 +9,7 @@ import { SpeechBubbles } from './dialogue.ts';
 import { createJournal } from './journal.ts';
 import { createAmbientAudio } from './audio.ts';
 import { EventBus } from './features/events.ts';
+import { currentPlanet } from './features/planet-state.ts';
 import { FEATURES } from './features/registry.ts';
 import type { FeatureContext } from './features/feature.ts';
 
@@ -50,7 +51,7 @@ const scene = new THREE.Scene();
 scene.background = new THREE.Color(PALETTE.sky);
 
 // 動く世界の更新関数と、つぶやき・図鑑が使う参照(村人・薬草)を受け取る
-const world = createWorld(scene);
+const world = createWorld(scene, currentPlanet() - 1);
 
 const player = new Player();
 enableShadows(player.mesh); // プレイヤーも影を落とす

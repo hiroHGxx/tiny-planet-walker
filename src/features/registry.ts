@@ -7,6 +7,14 @@ import { musicFeature } from './music/index.ts';
 import { questsFeature } from './quests/index.ts';
 import { talkFeature } from './talk/index.ts';
 import { homeFeature } from './home/index.ts';
+import { weatherFeature } from './weather/index.ts';
+import { scheduleFeature } from './schedule/index.ts';
+import { animalsFeature } from './animals/index.ts';
+import { lettersFeature } from './letters/index.ts';
+import { boardFeature } from './board/index.ts';
+import { gardenFeature } from './garden/index.ts';
+import { idleFeature } from './idle/index.ts';
+import { planetsFeature } from './planets/index.ts';
 
 /**
  * 有効な機能の一覧。ここから1行消せば(importも消して)機能が丸ごと消える。
@@ -22,4 +30,12 @@ export const FEATURES: Feature[] = [
   questsFeature,
   talkFeature,
   homeFeature,
+  weatherFeature,
+  scheduleFeature,
+  animalsFeature,
+  lettersFeature,
+  boardFeature,
+  gardenFeature,
+  idleFeature,
+  planetsFeature,
 ];
