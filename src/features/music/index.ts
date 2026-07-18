@@ -18,6 +18,8 @@ export const musicFeature: Feature = {
   setup(ctx: FeatureContext): void {
     ctx.events.on('herb-discovered', () => ctx.audio.playJingle('discover'));
     ctx.events.on('item-picked', () => ctx.audio.playJingle('pick'));
+    ctx.events.on('quest-completed', () => ctx.audio.playJingle('quest'));
+    ctx.events.on('craft-done', () => ctx.audio.playJingle('craft'));
   },
   update(_deltaTime: number, ctx: FeatureContext): void {
     const elevation = ctx.sunElevation();

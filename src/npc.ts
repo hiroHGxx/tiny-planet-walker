@@ -111,6 +111,11 @@ export class Npc {
       .multiplyScalar(PLANET_RADIUS + this.bubbleHeight);
   }
 
+  /** 会話の似顔絵のフレーミング用:頭上の高さの目安(体型で変わる) */
+  get portraitHeight(): number {
+    return this.bubbleHeight;
+  }
+
   /** 指定した接線方向を向くよう desiredQuat を更新する */
   private faceTowards(tangent: THREE.Vector3): void {
     _lookTarget.copy(this.mesh.position).add(tangent);
@@ -146,6 +151,26 @@ export class Npc {
     this.lookAroundTimer = 1.2 + this.rand() * 2.5;
   }
 
+  /** 会話中フラグ。立ち止まり、キョロキョロもやめて相手の方を向く */
+  private held = false;
+
+  /**
+   * 話しかけられた:立ち止まって towards(プレイヤー位置の方向)を向く。
+   * 会話が終わったら release() を呼ぶこと
+   */
+  hold(towards: THREE.Vector3): void {
+    this.held = true;
+    _up.copy(this.mesh.position).normalize();
+    _tangent.copy(towards).addScaledVector(_up, -towards.dot(_up));
+    if (_tangent.lengthSq() > 1e-6) this.faceTowards(_tangent.normalize());
+  }
+
+  /** 会話が終わった:少し間を置いてからいつもの生活に戻る */
+  release(): void {
+    this.held = false;
+    this.rest(1 + this.rand() * 2);
+  }
+
   update(time: number, playerDirection: THREE.Vector3): void {
     const deltaTime = this.lastTime < 0 ? 0 : Math.min(time - this.lastTime, 0.1);
     this.lastTime = time;
@@ -161,6 +186,17 @@ export class Npc {
     if (!near || deltaTime <= 0) return;
 
     let moving = false;
+
+    // 会話中は歩きもキョロキョロもせず、向きだけ相手へ寄せ続ける
+    if (this.held) {
+      this.mesh.quaternion.slerp(
+        this.desiredQuat,
+        1 - Math.exp(-TURN_RESPONSIVENESS * deltaTime)
+      );
+      this.collider.direction.copy(_up);
+      this.updateBodyMotion(deltaTime, false);
+      return;
+    }
 
     if (this.state === 'idle') {
       this.idleTimer -= deltaTime;

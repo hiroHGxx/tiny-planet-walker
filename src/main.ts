@@ -71,6 +71,7 @@ const ambientAudio = createAmbientAudio();
 // --- v2の機能(Feature)群 ---
 // 一覧はregistry.ts。プレイヤー地点の太陽の高さは毎フレームここへ書き込む
 let currentSunElevation = 1;
+const director = { mode: 'planet' as 'planet' | 'interior' };
 const featureContext: FeatureContext = {
   scene,
   player,
@@ -78,7 +79,10 @@ const featureContext: FeatureContext = {
   world,
   events,
   audio: ambientAudio,
+  director,
   sunElevation: () => currentSunElevation,
+  input: () => readInput(),
+  setView: (viewScene, viewCamera) => effects.setView(viewScene, viewCamera),
 };
 for (const feature of FEATURES) feature.setup(featureContext);
 
@@ -194,20 +198,25 @@ renderer.setAnimationLoop(() => {
   // 一気にワープしないよう上限を設ける
   const deltaTime = Math.min(timer.getDelta(), 0.1);
 
-  // カメラ相対移動:前フレームのカメラの視線方向を基準に入力を解釈する
   const input = readInput();
-  player.update(deltaTime, input, followCamera.getViewDirection(cameraDirection));
-  followCamera.update(deltaTime, player);
-  // プレイヤー位置は、遠くのNPC・動物を止める距離カリングに使う
-  world.update(timer.getElapsed(), player.mesh.position);
 
-  // つぶやき・図鑑・環境音は、プレイヤー地点の昼夜に合わせて動く
-  playerDirection.copy(player.mesh.position).normalize();
-  const sunElevation = getSunElevation(playerDirection);
-  currentSunElevation = sunElevation;
-  speechBubbles.update(deltaTime, player.mesh.position, sunElevation);
-  journal.update(deltaTime, playerDirection);
-  ambientAudio.update(deltaTime, input.x !== 0 || input.z !== 0, sunElevation);
+  // 星の上にいる間だけ、球面移動・カメラ・世界・つぶやき・図鑑を動かす
+  // (家の中では home 機能がプレイヤーの平面移動を担う)
+  if (director.mode === 'planet') {
+    // カメラ相対移動:前フレームのカメラの視線方向を基準に入力を解釈する
+    player.update(deltaTime, input, followCamera.getViewDirection(cameraDirection));
+    followCamera.update(deltaTime, player);
+    // プレイヤー位置は、遠くのNPC・動物を止める距離カリングに使う
+    world.update(timer.getElapsed(), player.mesh.position);
+
+    playerDirection.copy(player.mesh.position).normalize();
+    currentSunElevation = getSunElevation(playerDirection);
+    speechBubbles.update(deltaTime, player.mesh.position, currentSunElevation);
+    journal.update(deltaTime, playerDirection);
+  }
+
+  // 音は家の中でも続ける(BGM・環境音。昼夜は星にいたときの値を保つ)
+  ambientAudio.update(deltaTime, input.x !== 0 || input.z !== 0, currentSunElevation);
 
   // v2の機能群を更新する
   for (const feature of FEATURES) feature.update?.(deltaTime, featureContext);

@@ -19,6 +19,16 @@ Chrome自動操作(claude-in-chromeツール)でこのURLを開く。
 `document.querySelector('#title-start').click()` から始めること。
 このクリックがAudioContextの解錠も兼ねる。
 
+**合成キーはwindowに直接dispatchすると capture/bubble の順序が崩れる**
+(target=windowだと登録順に発火)。会話送りなどで1行飛ぶことがあるが
+実操作では起きない検証時だけの現象。気になるときは
+`new KeyboardEvent('keydown', { code, bubbles: true })` を `document.body` へ。
+
+**家の中(interior)の検証**: おえんちゃんの家(OEN_HOME)のドアで「E 家に入る」。
+室内は平面移動でスケールが小さいので、`__player.position.set(x, 0, z)` の
+直接代入で部屋の中(x: -4.4〜4.4, z: -3.3〜3.4)を移動してよい。
+調合台は(-2.7, -1.6)付近、出口は(0, 3.6)。外に出ると球面に戻る。
+
 ## 操作の再現方法
 
 - **移動**: 合成キーイベントで動く。keydownを1回送れば押しっぱなし扱いになり、

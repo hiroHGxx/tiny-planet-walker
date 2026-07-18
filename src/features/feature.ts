@@ -1,8 +1,17 @@
 import type * as THREE from 'three';
-import type { Player } from '../player.ts';
+import type { Player, PlayerInput } from '../player.ts';
 import type { World } from '../world.ts';
 import type { AmbientAudio } from '../audio.ts';
 import type { EventBus } from './events.ts';
+
+/**
+ * いま表示しているシーン。'planet'=星の上(既存の世界)、'interior'=家の中。
+ * mode の書き換えと描画の切り替えは home 機能が行い、
+ * main.ts は 'planet' のときだけ星side(プレイヤー球面移動・world等)を更新する。
+ */
+export interface SceneDirector {
+  mode: 'planet' | 'interior';
+}
 
 /**
  * v2の機能(Feature)モジュールの共通インターフェース。
@@ -19,8 +28,13 @@ export interface FeatureContext {
   world: World;
   events: EventBus;
   audio: AmbientAudio;
+  director: SceneDirector;
   /** プレイヤー地点の太陽の高さ(毎フレーム更新済みの値を返す) */
   sunElevation(): number;
+  /** いまのカメラ相対の移動入力(キー+仮想スティック合成) */
+  input(): PlayerInput;
+  /** 星side ⇄ 室内side の描画切り替え(effects.setViewへの橋渡し) */
+  setView(scene: THREE.Scene, camera: THREE.PerspectiveCamera): void;
 }
 
 export interface Feature {

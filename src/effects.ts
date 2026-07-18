@@ -19,8 +19,8 @@ import { PALETTE } from './palette.ts';
  * Points・半透明・userData.noOutline のオブジェクトは対象から外す。
  */
 class ToonOutlinePass extends Pass {
-  private readonly sceneRef: THREE.Scene;
-  private readonly cameraRef: THREE.PerspectiveCamera;
+  private sceneRef: THREE.Scene;
+  private cameraRef: THREE.PerspectiveCamera;
   private readonly depthTarget: THREE.WebGLRenderTarget;
   private readonly depthMaterial: THREE.MeshDepthMaterial;
   private readonly fsQuad: FullScreenQuad;
@@ -28,6 +28,14 @@ class ToonOutlinePass extends Pass {
   private readonly pixelRatio: number;
   private readonly hidden: THREE.Object3D[] = [];
   private readonly clearColor = new THREE.Color();
+
+  /** 描画対象を切り替える(家の中シーンなど)。深度の換算もカメラに合わせ直す */
+  setView(scene: THREE.Scene, camera: THREE.PerspectiveCamera): void {
+    this.sceneRef = scene;
+    this.cameraRef = camera;
+    this.uniforms.uCameraNear!.value = camera.near;
+    this.uniforms.uCameraFar!.value = camera.far;
+  }
 
   constructor(scene: THREE.Scene, camera: THREE.PerspectiveCamera, pixelRatio: number) {
     super();
@@ -190,6 +198,8 @@ const GradeShader = {
 export interface Effects {
   render: () => void;
   setSize: (width: number, height: number) => void;
+  /** 描画対象のシーンとカメラを切り替える(星の上 ⇄ 家の中) */
+  setView: (scene: THREE.Scene, camera: THREE.PerspectiveCamera) => void;
 }
 
 export function createEffects(
@@ -203,8 +213,10 @@ export function createEffects(
   const composer = new EffectComposer(renderer);
   composer.setPixelRatio(pixelRatio);
 
-  composer.addPass(new RenderPass(scene, camera));
-  composer.addPass(new ToonOutlinePass(scene, camera, pixelRatio));
+  const renderPass = new RenderPass(scene, camera);
+  const outlinePass = new ToonOutlinePass(scene, camera, pixelRatio);
+  composer.addPass(renderPass);
+  composer.addPass(outlinePass);
   // ブルーム:明るい部分(灯り・光る薬草・太陽側の空)だけを淡くにじませる
   composer.addPass(
     new UnrealBloomPass(new THREE.Vector2(size.x, size.y), 0.35, 0.5, 0.82)
@@ -217,5 +229,10 @@ export function createEffects(
   return {
     render: () => composer.render(),
     setSize: (width, height) => composer.setSize(width, height),
+    setView: (nextScene, nextCamera) => {
+      renderPass.scene = nextScene;
+      renderPass.camera = nextCamera;
+      outlinePass.setView(nextScene, nextCamera);
+    },
   };
 }

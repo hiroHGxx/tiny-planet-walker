@@ -1,0 +1,34 @@
+/* HUD左下の依頼メモ(F6)。受けている依頼をひとことで並べる */
+#quest-tracker {
+  display: none;
+  position: fixed;
+  left: 12px;
+  bottom: 12px;
+  max-width: min(340px, calc(100vw - 130px));
+  box-sizing: border-box;
+  padding: 8px 12px;
+  color: #4a3a2c;
+  background: rgba(255, 252, 242, 0.88);
+  border: 1px solid rgba(74, 58, 44, 0.25);
+  border-radius: 10px;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 12px;
+  line-height: 1.7;
+  pointer-events: none;
+  z-index: 4;
+}
+
+#quest-tracker.show {
+  display: block;
+}
+
+.quest-row.done {
+  opacity: 0.75;
+}
+
+/* タッチ端末では仮想スティックと重なるため、少し上へ逃がす */
+@media (pointer: coarse) {
+  #quest-tracker {
+    bottom: 156px;
+  }
+}

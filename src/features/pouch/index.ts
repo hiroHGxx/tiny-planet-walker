@@ -1,16 +1,18 @@
 import './style.css';
 import type * as THREE from 'three';
-import { HERB_SPECIES, HERB_ICONS } from '../../journal.ts';
+import { ITEMS, itemIcon, itemName } from '../../content/items.ts';
 import type { Feature, FeatureContext } from '../feature.ts';
 import { addInteractable } from '../interact/index.ts';
 import { loadFeatureData, saveFeatureData } from '../save.ts';
 import { currentDay } from '../clock.ts';
+import type { EventBus } from '../events.ts';
 
 /**
- * 薬草ポーチ(F2)。
+ * ポーチ(F2)。
  * 薬草の個株に近づいて「E 摘む」とポーチに入る。摘んだ株はぷるんと縮んで消え、
  * ゲーム内2日たつと同じ場所に再生する。上限や重さはなし(管理ゲーにしない)。
- * 摘んだ株と所持数は localStorage に保存される。
+ * 調合や依頼の納品もこのポーチの中身を使うため、
+ * getItemCount / grantItem / consumeItems を公開している(土台API)。
  */
 
 const VERSION = 1;
@@ -22,43 +24,70 @@ const REGROW_DAYS = 2;
 const SCALE_SPEED = 3.5;
 
 interface PouchSave {
-  /** 種類ID → 所持数 */
   counts: Record<string, number>;
-  /** 摘まれて再生待ちの株(herbSightingsのindexと摘んだ日) */
   picked: Array<{ index: number; day: number }>;
 }
 
-/** 見た目の縮み・育ちをなめらかにするためのアニメーション状態 */
 interface ScaleAnim {
   mesh: THREE.Group;
   baseScale: THREE.Vector3;
-  /** 0=消えた状態、1=元の大きさ */
   value: number;
   target: number;
 }
 
-const speciesName = new Map(HERB_SPECIES.map((entry) => [entry.id, entry.name]));
+// --- モジュール状態(公開APIから触るためsetupの外に置く) ---
+let counts: Record<string, number> = {};
+let picked = new Map<number, number>();
+let eventsRef: EventBus | null = null;
+let refreshPanel: () => void = () => {};
+let anims: ScaleAnim[] = [];
+
+const save = () => {
+  saveFeatureData('pouch', VERSION, {
+    counts,
+    picked: [...picked.entries()].map(([index, day]) => ({ index, day })),
+  } satisfies PouchSave);
+};
+
+/** いま持っている数(依頼・調合の判定に使う) */
+export function getItemCount(item: string): number {
+  return counts[item] ?? 0;
+}
+
+/** アイテムを増やす(調合の成果物・お礼の品など) */
+export function grantItem(item: string, count = 1): void {
+  counts[item] = (counts[item] ?? 0) + count;
+  save();
+  refreshPanel();
+  eventsRef?.emit('item-changed', { item, count: counts[item]! });
+}
+
+/** まとめて消費する。1つでも足りなければ何もせずfalse(納品・調合用) */
+export function consumeItems(
+  needs: ReadonlyArray<{ item: string; count: number }>
+): boolean {
+  if (needs.some((need) => getItemCount(need.item) < need.count)) return false;
+  for (const need of needs) {
+    counts[need.item] = (counts[need.item] ?? 0) - need.count;
+    eventsRef?.emit('item-changed', { item: need.item, count: counts[need.item]! });
+  }
+  save();
+  refreshPanel();
+  return true;
+}
 
 export const pouchFeature: Feature = {
   id: 'pouch',
   setup(ctx: FeatureContext): void {
+    eventsRef = ctx.events;
     const saved = loadFeatureData<PouchSave>('pouch', VERSION);
-    const counts: Record<string, number> = saved?.counts ?? {};
-    const picked = new Map<number, number>(); // index → 摘んだ日
-    for (const entry of saved?.picked ?? []) picked.set(entry.index, entry.day);
+    counts = saved?.counts ?? {};
+    picked = new Map(saved?.picked.map((entry) => [entry.index, entry.day]) ?? []);
 
-    const save = () => {
-      saveFeatureData('pouch', VERSION, {
-        counts,
-        picked: [...picked.entries()].map(([index, day]) => ({ index, day })),
-      } satisfies PouchSave);
-    };
-
-    const anims: ScaleAnim[] = [];
+    anims = [];
     const animByIndex = new Map<number, ScaleAnim>();
     const sightings = ctx.world.herbSightings;
 
-    /** 株のアニメーション状態を(必要なら作って)返す */
     const animFor = (index: number): ScaleAnim | null => {
       const mesh = sightings[index]?.mesh;
       if (!mesh) return null;
@@ -140,13 +169,13 @@ export const pouchFeature: Feature = {
       panel.classList.remove('open');
     });
 
-    const refreshPanel = () => {
+    refreshPanel = () => {
       panel.innerHTML = '';
       const title = document.createElement('div');
       title.className = 'pouch-title';
       title.textContent = '薬草ポーチ';
       panel.appendChild(title);
-      const owned = HERB_SPECIES.filter((species) => (counts[species.id] ?? 0) > 0);
+      const owned = ITEMS.filter((item) => (counts[item.id] ?? 0) > 0);
       if (owned.length === 0) {
         const empty = document.createElement('div');
         empty.className = 'pouch-empty';
@@ -154,30 +183,27 @@ export const pouchFeature: Feature = {
         panel.appendChild(empty);
         return;
       }
-      for (const species of owned) {
+      for (const item of owned) {
         const row = document.createElement('div');
         row.className = 'pouch-row';
         const icon = document.createElement('div');
         icon.className = 'pouch-icon';
-        icon.innerHTML = HERB_ICONS[species.id] ?? '';
+        icon.innerHTML = itemIcon(item.id);
         const name = document.createElement('div');
         name.className = 'pouch-name';
-        name.textContent = speciesName.get(species.id) ?? species.id;
+        name.textContent = itemName(item.id);
         const count = document.createElement('div');
         count.className = 'pouch-count';
-        count.textContent = `× ${counts[species.id]}`;
+        count.textContent = `× ${counts[item.id]}`;
         row.append(icon, name, count);
         panel.appendChild(row);
       }
     };
     refreshPanel();
-
-    // update から参照するためにモジュール状態へ
-    pouchAnims = anims;
   },
   update(deltaTime: number): void {
     // 摘んだ株の縮み・再生の育ちをなめらかに動かす
-    for (const anim of pouchAnims) {
+    for (const anim of anims) {
       if (anim.value === anim.target) continue;
       const step = SCALE_SPEED * deltaTime;
       anim.value =
@@ -187,12 +213,8 @@ export const pouchFeature: Feature = {
       // 縮むときは少しふくらんでから消える"ぷるん"、育つときはそのまま
       const eased =
         anim.target === 0 ? anim.value * (2 - anim.value) : anim.value * anim.value;
-      anim.mesh.scale
-        .copy(anim.baseScale)
-        .multiplyScalar(Math.max(eased, 0.0001));
+      anim.mesh.scale.copy(anim.baseScale).multiplyScalar(Math.max(eased, 0.0001));
       if (anim.value === 0) anim.mesh.visible = false;
     }
   },
 };
-
-let pouchAnims: ScaleAnim[] = [];

@@ -15,6 +15,14 @@ export interface GameEvents {
   'item-changed': { item: string; count: number };
   /** ゲーム内の日付が進んだ(太陽が昇った回数) */
   'day-passed': { day: number };
+  /** 依頼を受けた */
+  'quest-started': { questId: string };
+  /** 依頼を果たした */
+  'quest-completed': { questId: string };
+  /** 調合台で薬を作った */
+  'craft-done': { recipeId: string };
+  /** 星の上 ⇄ 家の中 の切り替えが起きた */
+  'scene-changed': { scene: 'planet' | 'interior' };
 }
 
 export type GameEventType = keyof GameEvents;

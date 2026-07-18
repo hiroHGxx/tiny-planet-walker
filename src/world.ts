@@ -102,7 +102,8 @@ const HERB_CLUSTER_CENTERS = [
 // 残りの場所(何も置かない領域)が自然と原っぱになる
 
 /** 集落(家の集まるエリア)の中心。1つ目は薬屋のそば=町の中心 */
-const VILLAGE_CENTERS = [
+/** 集落の中心(名前つき村人の配置にも使う) */
+export const VILLAGE_CENTERS = [
   moveToward(SHOP_DIRECTION.clone(), new THREE.Vector3(0, -1, 0.3), 0.45), // 薬屋の先の村
   new THREE.Vector3(-0.75, 0.25, 0.6).normalize(), // 反対側の村
   new THREE.Vector3(0.05, -0.85, -0.5).normalize(), // 裏側の小さな村
@@ -127,13 +128,13 @@ const FOREST_CENTERS = [
 ];
 
 /** おえんちゃんの家。みんなの家から少し離れた、大通りの脇の静かな場所 */
-const OEN_HOME = new THREE.Vector3(0.7, 0.55, 0.45).normalize();
+export const OEN_HOME = new THREE.Vector3(0.7, 0.55, 0.45).normalize();
 
 /** 大通り(開始地点→薬屋跡)の薬屋側の入り口 */
 const SHOP_FRONT = moveToward(SHOP_DIRECTION.clone(), START_NORMAL, 0.1);
 
 /** おえんちゃんの家から大通りへの最短の合流点(小道のつなぎ先) */
-const OEN_JUNCTION = (() => {
+export const OEN_JUNCTION = (() => {
   const roadNormal = new THREE.Vector3().crossVectors(START_NORMAL, SHOP_FRONT).normalize();
   return OEN_HOME.clone().addScaledVector(roadNormal, -OEN_HOME.dot(roadNormal)).normalize();
 })();
@@ -251,7 +252,8 @@ function pushedOffRoads(direction: THREE.Vector3, clearance: number): THREE.Vect
 const GREEN_HOUSE_DIRECTION = pushedOffRoads(SHOP_DIRECTION.clone(), 2.4);
 
 /** お花畑の中心 */
-const FLOWER_FIELDS = [
+/** お花畑の中心(花好きの村人の配置にも使う) */
+export const FLOWER_FIELDS = [
   new THREE.Vector3(-0.15, 0.85, -0.5).normalize(),
   new THREE.Vector3(-0.85, -0.4, 0.2).normalize(),
 ];
@@ -267,7 +269,8 @@ const FARM_FIELDS = [
 ].map((direction) => pushedOffRoads(direction, 2.8));
 
 /** 柵つきの牧場(村のそばでひつじを飼う)。道に重なったら自動で横へずらす */
-const PASTURES = [
+/** 柵つき牧場の中心(ひつじ番の村人の配置にも使う) */
+export const PASTURES = [
   moveToward(VILLAGE_CENTERS[0]!.clone(), HILLS[1]!.direction, 0.19),
   moveToward(VILLAGE_CENTERS[2]!.clone(), LAKES[1]!.direction, 0.18),
 ].map((direction) => pushedOffRoads(direction, 3.2));

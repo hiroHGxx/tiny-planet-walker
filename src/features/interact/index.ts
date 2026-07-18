@@ -15,10 +15,14 @@ import type { Feature, FeatureContext } from '../feature.ts';
 export interface Interactable {
   /** 対象がある方向(単位ベクトル)。動くものは呼び出し側が書き換えてよい */
   direction: THREE.Vector3;
-  /** この表面距離まで近づいたら触れられる */
+  /** この距離まで近づいたら触れられる(星の上=表面距離、室内=直線距離) */
   radius: number;
   /** プロンプトに出す動詞(「摘む」「話す」「入る」など) */
   label: string;
+  /** どのシーンにある対象か(省略時は星の上) */
+  space?: 'planet' | 'interior';
+  /** 室内の対象の位置(space: 'interior' のとき必須。部屋座標) */
+  position?: THREE.Vector3;
   /** 同時に届く対象が複数あるときの優先度(大きいほど優先。省略時0) */
   priority?: number;
   /** falseを返す間は対象にならない(摘まれて再生待ちの株など) */
@@ -68,21 +72,34 @@ export const interactFeature: Feature = {
     });
   },
   update(_deltaTime: number, ctx: FeatureContext): void {
+    const mode = ctx.director.mode;
     _playerDirection.copy(ctx.player.mesh.position).normalize();
 
-    // 届く範囲にある対象から、優先度が高く・より近いものを1件選ぶ
+    // いまのシーンにあり、届く範囲の対象から、優先度が高く・より近いものを1件選ぶ
     let best: Interactable | null = null;
     let bestPriority = -Infinity;
-    let bestDot = -1;
+    let bestCloseness = -Infinity;
     for (const item of interactables) {
+      if ((item.space ?? 'planet') !== mode) continue;
       if (item.enabled && !item.enabled()) continue;
-      const dot = item.direction.dot(_playerDirection);
-      if (dot < Math.cos(item.radius / PLANET_RADIUS)) continue;
+      // 近さ:星の上では方向のdot、室内では距離の逆符号(どちらも大きいほど近い)
+      let closeness: number;
+      if (mode === 'planet') {
+        closeness = item.direction.dot(_playerDirection);
+        if (closeness < Math.cos(item.radius / PLANET_RADIUS)) continue;
+      } else {
+        const distance = item.position?.distanceTo(ctx.player.mesh.position) ?? Infinity;
+        if (distance > item.radius) continue;
+        closeness = -distance;
+      }
       const priority = item.priority ?? 0;
-      if (priority > bestPriority || (priority === bestPriority && dot > bestDot)) {
+      if (
+        priority > bestPriority ||
+        (priority === bestPriority && closeness > bestCloseness)
+      ) {
         best = item;
         bestPriority = priority;
-        bestDot = dot;
+        bestCloseness = closeness;
       }
     }
 

@@ -144,6 +144,64 @@ export class Player {
   }
 
   /**
+   * 室内(平面)用の移動。家の中では球面ではなく床(y=0)の上を歩く。
+   * 入力の解釈と歩行モーションは球面時と同じで、位置の計算だけ平面になる。
+   * bounds で部屋の内側に収める(家具はぶつかるほど狭くないので判定しない)。
+   */
+  updateInRoom(
+    deltaTime: number,
+    input: PlayerInput,
+    viewForward: THREE.Vector3,
+    bounds: { minX: number; maxX: number; minZ: number; maxZ: number }
+  ): void {
+    const position = this.mesh.position;
+    const quaternion = this.mesh.quaternion;
+    _up.set(0, 1, 0);
+
+    const moving = input.x !== 0 || input.z !== 0;
+    let turnLean = 0;
+
+    if (moving) {
+      // カメラ基準の「画面の奥」「画面の右」を床の上に作る
+      _forward.copy(viewForward);
+      _forward.y = 0;
+      if (_forward.lengthSq() < 1e-6) _forward.set(0, 0, -1);
+      _forward.normalize();
+      _right.crossVectors(_forward, _up).normalize();
+      _moveDir
+        .copy(_forward)
+        .multiplyScalar(input.z)
+        .addScaledVector(_right, input.x)
+        .normalize();
+
+      // 移動方向へ滑らかに振り向く(球面版と同じ、軸がY固定なだけ)
+      _currentForward.set(0, 0, -1).applyQuaternion(quaternion);
+      _currentForward.y = 0;
+      _currentForward.normalize();
+      _turnCross.crossVectors(_currentForward, _moveDir);
+      const angle = Math.atan2(_turnCross.dot(_up), _currentForward.dot(_moveDir));
+      const turnT = 1 - Math.exp(-TURN_RESPONSIVENESS * deltaTime);
+      _yawQuat.setFromAxisAngle(_up, angle * turnT);
+      quaternion.premultiply(_yawQuat);
+      turnLean = THREE.MathUtils.clamp(angle, -1, 1);
+
+      // 室内は歩幅を少し落ち着かせる
+      position.addScaledVector(_moveDir, MOVE_SPEED * 0.55 * deltaTime);
+      position.x = THREE.MathUtils.clamp(position.x, bounds.minX, bounds.maxX);
+      position.z = THREE.MathUtils.clamp(position.z, bounds.minZ, bounds.maxZ);
+    }
+
+    // 姿勢の「上」をY+に寄せる(球面から入ってきた直後の傾きを吸収する)
+    _currentUp.set(0, 1, 0).applyQuaternion(quaternion);
+    _alignQuat.setFromUnitVectors(_currentUp, _up);
+    quaternion.premultiply(_alignQuat);
+    quaternion.normalize();
+    position.y = 0;
+
+    this.updateBodyMotion(deltaTime, moving, turnLean);
+  }
+
+  /**
    * 歩行モーションもどき。見た目専用の内側グループ(this.body)だけを
    * 揺らすので、球面移動やカメラの計算には影響しない。
    * turnLean は移動方向への振り向き量(-1〜1)で、旋回中の体の傾きに使う。
