@@ -6,6 +6,7 @@ import { NAMED_NPCS, type NamedNpcDef } from '../../content/npcs.ts';
 import type { Feature, FeatureContext } from '../feature.ts';
 import { addInteractable } from '../interact/index.ts';
 import { questConversation, acceptQuest, completeQuest } from '../quests/index.ts';
+import { currentPlanet } from '../planet-state.ts';
 
 /**
  * 名前つき村人と会話(F4+F5)。
@@ -57,7 +58,9 @@ export const talkFeature: Feature = {
   id: 'talk',
   setup(ctx: FeatureContext): void {
     // --- 名前つき村人を星に置く ---
-    const villagers: NamedNpc[] = NAMED_NPCS.map((def) => {
+    const villagers: NamedNpc[] = NAMED_NPCS.filter(
+      (def) => (def.planet ?? 1) === currentPlanet()
+    ).map((def) => {
       const npc = new Npc(def.home.clone(), mulberry32(def.seed));
       enableShadows(npc.mesh);
       ctx.scene.add(npc.mesh);

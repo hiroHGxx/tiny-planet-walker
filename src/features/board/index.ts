@@ -2,7 +2,8 @@ import './style.css';
 import * as THREE from 'three';
 import { PALETTE, toonMaterial, flatGeometry } from '../../palette.ts';
 import { PLANET_RADIUS, VILLAGE_CENTERS, LAKES } from '../../world.ts';
-import { HERB_SPECIES } from '../../journal.ts';
+import { PLANET_HERBS } from '../../content/planets.ts';
+import { currentPlanet } from '../planet-state.ts';
 import { itemName } from '../../content/items.ts';
 import type { Feature, FeatureContext } from '../feature.ts';
 import { addInteractable } from '../interact/index.ts';
@@ -39,7 +40,8 @@ interface BoardSave {
 
 /** その日のお手伝いを作る(薬草・羊毛・水からランダムに) */
 function rollErrands(): Errand[] {
-  const pool = [...HERB_SPECIES.map((species) => species.id), 'wool', 'wool', 'water', 'water'];
+  const herbs = PLANET_HERBS[currentPlanet()] ?? PLANET_HERBS[1]!;
+  const pool = [...herbs, 'wool', 'wool', 'water', 'water'];
   const errands: Errand[] = [];
   const used = new Set<string>();
   while (errands.length < DAILY_COUNT) {

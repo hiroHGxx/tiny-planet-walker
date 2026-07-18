@@ -75,6 +75,18 @@ const HERB_SPECIES_ID = new Map<(rand: Rand) => THREE.Group, string>([
   [createKoganeHerb, 'kogane'],
 ]);
 
+import { currentPlanet } from './features/planet-state.ts';
+import { PLANET_HERBS } from './content/planets.ts';
+
+/**
+ * 星ごとに大陸の並びを回す回転。2つ目以降の星では村・湖・道の位置関係が
+ * 開始地点から見てまったく変わる(根っこの配置定数に一度だけ掛ける)
+ */
+const LAYOUT_ROTATION = new THREE.Quaternion().setFromAxisAngle(
+  new THREE.Vector3(0.9, 0.25, 0.35).normalize(),
+  [0, 1.9, 3.9][currentPlanet() - 1] ?? (currentPlanet() - 1) * 1.3
+);
+
 /** 再現性のある簡易乱数(毎回同じ配置になるようにする) */
 function createRandom(seed: number): Rand {
   let s = seed;
@@ -88,7 +100,7 @@ function createRandom(seed: number): Rand {
 const START_NORMAL = new THREE.Vector3(0, 1, 0);
 
 /** 薬屋を置く方向(開始地点から約115度。少し歩くと地平線から現れる) */
-const SHOP_DIRECTION = new THREE.Vector3(0.85, -0.42, 0.3).normalize();
+const SHOP_DIRECTION = new THREE.Vector3(0.85, -0.42, 0.3).normalize().applyQuaternion(LAYOUT_ROTATION);
 
 /**
  * 薬草の群生地の中心方向。
@@ -105,7 +117,7 @@ const HERB_CLUSTER_CENTERS = [
   new THREE.Vector3(0.15, 0.75, -0.65), // 開始地点から少し歩いた先
   new THREE.Vector3(-0.7, 0.6, 0.15),
   new THREE.Vector3(0.45, -0.8, 0.35), // 裏側その2
-].map((v) => v.normalize());
+].map((v) => v.normalize().applyQuaternion(LAYOUT_ROTATION));
 
 // --- 町のレイアウト ---
 // 惑星全体を「集落・湖・丘・森・原っぱ」でバランスよくゾーニングする。
@@ -115,30 +127,30 @@ const HERB_CLUSTER_CENTERS = [
 /** 集落の中心(名前つき村人の配置にも使う) */
 export const VILLAGE_CENTERS = [
   moveToward(SHOP_DIRECTION.clone(), new THREE.Vector3(0, -1, 0.3), 0.45), // 薬屋の先の村
-  new THREE.Vector3(-0.75, 0.25, 0.6).normalize(), // 反対側の村
-  new THREE.Vector3(0.05, -0.85, -0.5).normalize(), // 裏側の小さな村
+  new THREE.Vector3(-0.75, 0.25, 0.6).normalize().applyQuaternion(LAYOUT_ROTATION), // 反対側の村
+  new THREE.Vector3(0.05, -0.85, -0.5).normalize().applyQuaternion(LAYOUT_ROTATION), // 裏側の小さな村
 ];
 
 /** 湖(方向と表面半径)。テストからも参照する */
 export const LAKES = [
-  { direction: new THREE.Vector3(0.5, 0.55, -0.65).normalize(), radius: 4 },
-  { direction: new THREE.Vector3(-0.35, -0.45, -0.82).normalize(), radius: 2.4 },
+  { direction: new THREE.Vector3(0.5, 0.55, -0.65).normalize().applyQuaternion(LAYOUT_ROTATION), radius: 4 },
+  { direction: new THREE.Vector3(-0.35, -0.45, -0.82).normalize().applyQuaternion(LAYOUT_ROTATION), radius: 2.4 },
 ];
 
 /** 小高い丘(方向・表面半径・高さ) */
 const HILLS = [
-  { direction: new THREE.Vector3(-0.9, 0.38, 0.1).normalize(), radius: 2.8, height: 1.1 },
-  { direction: new THREE.Vector3(0.35, 0.2, 0.9).normalize(), radius: 2.0, height: 0.75 },
+  { direction: new THREE.Vector3(-0.9, 0.38, 0.1).normalize().applyQuaternion(LAYOUT_ROTATION), radius: 2.8, height: 1.1 },
+  { direction: new THREE.Vector3(0.35, 0.2, 0.9).normalize().applyQuaternion(LAYOUT_ROTATION), radius: 2.0, height: 0.75 },
 ];
 
 /** 森(木を密集させるエリアの中心) */
 const FOREST_CENTERS = [
-  new THREE.Vector3(0.05, 0.45, 0.9).normalize(),
-  new THREE.Vector3(-0.45, -0.7, 0.55).normalize(),
+  new THREE.Vector3(0.05, 0.45, 0.9).normalize().applyQuaternion(LAYOUT_ROTATION),
+  new THREE.Vector3(-0.45, -0.7, 0.55).normalize().applyQuaternion(LAYOUT_ROTATION),
 ];
 
 /** おえんちゃんの家。みんなの家から少し離れた、大通りの脇の静かな場所 */
-export const OEN_HOME = new THREE.Vector3(0.7, 0.55, 0.45).normalize();
+export const OEN_HOME = new THREE.Vector3(0.7, 0.55, 0.45).normalize().applyQuaternion(LAYOUT_ROTATION);
 
 /** 大通り(開始地点→薬屋跡)の薬屋側の入り口 */
 const SHOP_FRONT = moveToward(SHOP_DIRECTION.clone(), START_NORMAL, 0.1);
@@ -264,8 +276,8 @@ const GREEN_HOUSE_DIRECTION = pushedOffRoads(SHOP_DIRECTION.clone(), 2.4);
 /** お花畑の中心 */
 /** お花畑の中心(花好きの村人の配置にも使う) */
 export const FLOWER_FIELDS = [
-  new THREE.Vector3(-0.15, 0.85, -0.5).normalize(),
-  new THREE.Vector3(-0.85, -0.4, 0.2).normalize(),
+  new THREE.Vector3(-0.15, 0.85, -0.5).normalize().applyQuaternion(LAYOUT_ROTATION),
+  new THREE.Vector3(-0.85, -0.4, 0.2).normalize().applyQuaternion(LAYOUT_ROTATION),
 ];
 
 /** 畑(村のそばの耕作地)。道に重なったら自動で横へずらす */
@@ -767,6 +779,7 @@ function addHerbClusters(
   glowHerbPositions: THREE.Vector3[],
   sightings: HerbSighting[]
 ): void {
+  const available = PLANET_HERBS[currentPlanet()] ?? PLANET_HERBS[1]!;
   const herbFactories = [
     createRoundLeafHerb,
     createStarFlowerHerb,
@@ -780,7 +793,7 @@ function addHerbClusters(
     createSuzufuriHerb,
     createMurasakiMushroom,
     createKoganeHerb,
-  ];
+  ].filter((factory) => available.includes(HERB_SPECIES_ID.get(factory)!));
   for (const center of HERB_CLUSTER_CENTERS) {
     const herbCount = 6 + Math.floor(rand() * 3); // 群生ごとに6〜8株
     for (let i = 0; i < herbCount; i++) {

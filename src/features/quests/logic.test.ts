@@ -3,6 +3,7 @@ import { conversationFor, type QuestDef } from './logic.ts';
 import { RECIPES, canCraft } from '../../content/recipes.ts';
 import { CHAPTER1 } from '../../content/quests/chapter1.ts';
 import { CHAPTER2 } from '../../content/quests/chapter2.ts';
+import { CHAPTER3 } from '../../content/quests/chapter3.ts';
 import { ITEMS } from '../../content/items.ts';
 
 const DEFS: QuestDef[] = [
@@ -64,10 +65,10 @@ describe('コンテンツの整合性', () => {
   const itemIds = new Set(ITEMS.map((item) => item.id));
 
   it('全章の納品物はすべてアイテム台帳にある', () => {
-    for (const quest of [...CHAPTER1, ...CHAPTER2]) {
+    for (const quest of [...CHAPTER1, ...CHAPTER2, ...CHAPTER3]) {
       expect(itemIds.has(quest.need.item), `${quest.id}の${quest.need.item}`).toBe(true);
       if (quest.after) {
-        expect([...CHAPTER1, ...CHAPTER2].some((q) => q.id === quest.after), `${quest.id}のafter`).toBe(true);
+        expect([...CHAPTER1, ...CHAPTER2, ...CHAPTER3].some((q) => q.id === quest.after), `${quest.id}のafter`).toBe(true);
       }
     }
   });

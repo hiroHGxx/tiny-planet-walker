@@ -6,6 +6,7 @@ import { LETTERS } from '../../content/letters.ts';
 import type { Feature, FeatureContext } from '../feature.ts';
 import { addInteractable } from '../interact/index.ts';
 import { loadFeatureData, saveFeatureData } from '../save.ts';
+import { currentPlanet } from '../planet-state.ts';
 
 /**
  * 手紙の断片(F11)。星のあちこちに光る紙片が落ちていて、「E 拾う」で読める。
@@ -36,6 +37,8 @@ export function pushedOffLakes(direction: THREE.Vector3): THREE.Vector3 {
 export const lettersFeature: Feature = {
   id: 'letters',
   setup(ctx: FeatureContext): void {
+    // 手紙は「薬草の星」に残された前の薬師さんの物語。他の星には落ちていない
+    if (currentPlanet() !== 1) return;
     const saved = loadFeatureData<{ found: string[] }>('letters', VERSION);
     const found = new Set(saved?.found ?? []);
     const save = () => saveFeatureData('letters', VERSION, { found: [...found] });

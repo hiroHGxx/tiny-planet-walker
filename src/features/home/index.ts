@@ -9,6 +9,7 @@ import type { Feature, FeatureContext } from '../feature.ts';
 import { addInteractable } from '../interact/index.ts';
 import { getItemCount, grantItem, consumeItems } from '../pouch/index.ts';
 import { starlightCount } from '../quests/index.ts';
+import { currentPlanet } from '../planet-state.ts';
 
 /**
  * おえんちゃんの家の中(F7)。
@@ -237,7 +238,7 @@ export const homeFeature: Feature = {
     addInteractable({
       direction: moveToward(OEN_HOME.clone(), OEN_JUNCTION, 0.06),
       radius: 2.2,
-      label: '家に入る',
+      label: currentPlanet() === 1 ? '家に入る' : '調合小屋に入る',
       priority: 8,
       onUse: enter,
     });
