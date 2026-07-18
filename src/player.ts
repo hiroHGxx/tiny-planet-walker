@@ -269,15 +269,9 @@ function createFaceTexture(): THREE.CanvasTexture {
     ctx.fill();
   }
 
-  // 眉(眼鏡の上にのぞく、細い茶色の弧。キャラクターシート準拠)
-  ctx.strokeStyle = '#8a6a3a';
+  // 注意:このテクスチャは頭の球へぐるりと貼られる。顔の中心から離れた
+  // 描き込み(眉・眼鏡のつる等)は、後頭部や側頭部の髪の隙間に露出するため描かない
   ctx.lineCap = 'round';
-  ctx.lineWidth = 4;
-  for (const side of [-1, 1]) {
-    ctx.beginPath();
-    ctx.ellipse(faceX + side * eyeDX, eyeY - 26, 26, 14, 0, Math.PI * 1.2, Math.PI * 1.8);
-    ctx.stroke();
-  }
 
   // 目(キャラクターシートの大きな琥珀の瞳。縁取り+上まぶたの影+グラデーション)
   for (const side of [-1, 1]) {
@@ -347,14 +341,7 @@ function createFaceTexture(): THREE.CanvasTexture {
   ctx.moveTo(faceX - 16, eyeY - 14);
   ctx.quadraticCurveTo(faceX, eyeY - 20, faceX + 16, eyeY - 14);
   ctx.stroke();
-  // つる(こめかみへ。横髪に隠れる程度)
-  ctx.lineWidth = 5;
-  for (const side of [-1, 1]) {
-    ctx.beginPath();
-    ctx.moveTo(faceX + side * (eyeDX + 41), eyeY - 8);
-    ctx.lineTo(faceX + side * (eyeDX + 78), eyeY - 18);
-    ctx.stroke();
-  }
+  // つるは描かない(側頭部〜後頭部へ回り込んで露出するため)
 
   // 小さく穏やかな口
   ctx.strokeStyle = '#a55c3a';
