@@ -570,9 +570,11 @@ function buildCharacter(): { root: THREE.Group; limbs: CharacterLimbs } {
   hairBall.scale.set(1.09, 0.96, 1.0); // 髪の横幅を広げ、相対的に顔を小さく見せる
   head.add(hairBall);
 
-  // 前髪:しずく型の薄い房(Shape+ExtrudeGeometry)。
-  // 上が広く毛先がすこし細くなる形で、丸いお団子にも鋭いトゲにもしない。
-  // 房ごとに幅・長さ・傾きを変え、左右非対称に流す(キャラクターシート準拠)
+  // 前髪・横髪:しずく型の薄い房を「頭の球面に沿わせて」並べる。
+  // 固定平面に板を並べると帽子のつば・カチューシャ・羽のように浮いて見えるため、
+  // 各房をyaw角で頭のまわりに配置し、面を外向きに回して輪郭の一部にする。
+  // 前髪は生え際(y≈0.19)から額に沿って落ち、横髪は同じ仕組みのまま
+  // 頬に沿って顎の近くまで伸ばす(前髪〜横髪〜後頭部がひとつのボブにつながる)
   const bangShape = new THREE.Shape();
   bangShape.moveTo(-0.5, 0);
   bangShape.quadraticCurveTo(-0.56, -0.45, -0.2, -0.88); // 左辺:下へすぼむ
@@ -584,44 +586,48 @@ function buildCharacter(): { root: THREE.Group; limbs: CharacterLimbs } {
   );
   bangGeometry.translate(0, 0, -0.5); // 厚みの中心を原点へ
 
-  /** 前髪ひと房。widthとheightは房の大きさ、tiltは毛先の流れ(+で右へ) */
-  const addBangLock = (
-    x: number,
+  /** 房の面が沿う頭まわりの半径(顔の球のすぐ外側) */
+  const HAIR_RADIUS = 0.235;
+
+  /**
+   * 髪ひと房。yawは正面(-Z)からの角度(+で向かって左=キャラの右)。
+   * topが房の上端、heightが房の長さ、tiltは毛先の流れ(+で右へ)
+   */
+  const addHairLock = (
+    yaw: number,
     top: number,
     width: number,
     height: number,
-    z: number,
     tilt: number,
     light: boolean
   ) => {
     const lock = new THREE.Mesh(bangGeometry, light ? hairLight : hair);
-    lock.scale.set(width, height, 0.055);
-    lock.position.set(x, top, z);
-    lock.rotation.set(0.16, 0, tilt); // 上端をおでこの傾きに沿わせてから流す
+    lock.scale.set(width, height, 0.05);
+    lock.position.set(Math.sin(yaw) * HAIR_RADIUS, top, -Math.cos(yaw) * HAIR_RADIUS);
+    // 面を頭の外向きに合わせ、上端をおでこの傾きへ少し寝かせてから毛先を流す
+    lock.rotation.set(0.13, -yaw, tilt);
     head.add(lock);
   };
-  // 中央やや左に主となる長い房、外側ほど短く斜め外へ流す(等間隔にしない)
-  addBangLock(-0.02, 0.225, 0.16, 0.17, -0.2, 0.05, false); // 主となる房
-  addBangLock(-0.12, 0.215, 0.12, 0.14, -0.185, -0.16, true);
-  addBangLock(-0.205, 0.21, 0.15, 0.16, -0.142, -0.3, false);
-  addBangLock(0.095, 0.215, 0.145, 0.14, -0.188, 0.2, false);
-  addBangLock(0.195, 0.205, 0.125, 0.145, -0.15, 0.38, true);
-  // こめかみ:前髪と横髪の間の肌の隙間を埋め、境目を自然につなぐ
-  addBangLock(-0.245, 0.185, 0.115, 0.15, -0.105, -0.42, false);
-  addBangLock(0.25, 0.17, 0.105, 0.14, -0.1, 0.5, false);
 
-  // 横髪:頬を包むボブ。丸い耳当てにならないよう、縦長にして内側・正面側へ寄せ、
-  // 上端は髪の土台につなぎ、下端は顎に沿って内側へ収める
-  const sidePuffGeometry = flatGeometry(new THREE.SphereGeometry(0.115, 7, 5));
-  for (const side of [-1, 1]) {
-    const puff = new THREE.Mesh(sidePuffGeometry, hair);
-    puff.position.set(side * 0.2, -0.08, -0.05);
-    puff.scale.set(0.6, 1.55, 0.95);
-    puff.rotation.z = side * -0.08; // 裾を顎へ向けて内側へ丸める
-    puff.rotation.y = side * 0.25; // 頬のカーブに沿わせる
-    head.add(puff);
-  }
+  // 前髪:主となる房を中央やや左に、外側ほど短く。下端は不揃いで
+  // 眼鏡(上端y≈0.09)に少しかかる程度。帽子のつばに見える高さに置かない
+  addHairLock(-0.08, 0.19, 0.15, 0.125, 0.04, false); // 主となる房
+  addHairLock(-0.44, 0.185, 0.14, 0.105, -0.12, true);
+  addHairLock(0.3, 0.185, 0.15, 0.11, 0.1, false);
+  addHairLock(-0.78, 0.175, 0.13, 0.11, -0.16, false);
+  addHairLock(0.68, 0.175, 0.13, 0.1, 0.15, true);
+
+  // 横髪:同じ房を長くして頬に沿わせ、顎の近くへ丸く収める(羽にしない)
+  addHairLock(-1.08, 0.15, 0.14, 0.34, -0.04, false);
+  addHairLock(1.08, 0.15, 0.14, 0.33, 0.04, false);
+  addHairLock(-1.48, 0.13, 0.13, 0.3, 0, true);
+  addHairLock(1.48, 0.13, 0.13, 0.3, 0, false);
+  // 耳の後ろ:横髪と後頭部の間の隙間を埋めて、ボブを一周つなげる
+  addHairLock(-1.95, 0.12, 0.18, 0.28, 0, false);
+  addHairLock(1.95, 0.12, 0.18, 0.28, 0, true);
+
   // 後頭部の丸み(えり足まで2段でボブの丸みを出す)
+  const sidePuffGeometry = flatGeometry(new THREE.SphereGeometry(0.115, 7, 5));
   const backPuff = new THREE.Mesh(sidePuffGeometry, hair);
   backPuff.position.set(0, -0.06, 0.19);
   backPuff.scale.set(1.45, 1.1, 1.0);
