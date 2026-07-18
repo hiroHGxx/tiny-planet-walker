@@ -262,68 +262,98 @@ function createFaceTexture(): THREE.CanvasTexture {
   const eyeDX = 56; // 目の左右の間隔
 
   // ごく薄い頬の赤み
-  ctx.fillStyle = 'rgba(236, 146, 110, 0.28)';
+  ctx.fillStyle = 'rgba(236, 146, 110, 0.34)';
   for (const side of [-1, 1]) {
     ctx.beginPath();
     ctx.ellipse(faceX + side * 100, 280, 21, 12, 0, 0, Math.PI * 2);
     ctx.fill();
   }
 
-  // 眼鏡(柔らかい茶色の細い丸フレーム。目より一回り大きい輪にして瞳を隠さない)
-  ctx.strokeStyle = '#6a4f3a';
+  // 眉(眼鏡の上にのぞく、細い茶色の弧。キャラクターシート準拠)
+  ctx.strokeStyle = '#8a6a3a';
   ctx.lineCap = 'round';
-  ctx.lineWidth = 3.5;
+  ctx.lineWidth = 4;
   for (const side of [-1, 1]) {
     ctx.beginPath();
-    ctx.arc(faceX + side * eyeDX, eyeY, 37, 0, Math.PI * 2);
-    ctx.stroke();
-  }
-  ctx.lineWidth = 2.5;
-  ctx.beginPath();
-  ctx.moveTo(faceX - 18, eyeY - 10);
-  ctx.lineTo(faceX + 18, eyeY - 10);
-  ctx.stroke();
-  // つる(こめかみへ向けて短く。横髪に隠れる程度)
-  ctx.lineWidth = 2.5;
-  for (const side of [-1, 1]) {
-    ctx.beginPath();
-    ctx.moveTo(faceX + side * (eyeDX + 38), eyeY - 4);
-    ctx.lineTo(faceX + side * (eyeDX + 76), eyeY - 14);
+    ctx.ellipse(faceX + side * eyeDX, eyeY - 26, 26, 14, 0, Math.PI * 1.2, Math.PI * 1.8);
     ctx.stroke();
   }
 
-  // 目(キャラクターシート寄りの大きな琥珀色の瞳)
+  // 目(キャラクターシートの大きな琥珀の瞳。縁取り+上まぶたの影+グラデーション)
   for (const side of [-1, 1]) {
     const cx = faceX + side * eyeDX;
-    // 虹彩(琥珀色)
+    // 白目(瞳のまわりにわずかに見せる)
+    ctx.fillStyle = '#fdf7ec';
+    ctx.beginPath();
+    ctx.ellipse(cx, eyeY, 29, 34, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // 虹彩の縁取り(こげ茶)→ 基調の琥珀 → 下側の明るい透け
+    ctx.fillStyle = '#7a4712';
+    ctx.beginPath();
+    ctx.ellipse(cx, eyeY, 25, 32, 0, 0, Math.PI * 2);
+    ctx.fill();
     ctx.fillStyle = '#dd8524';
     ctx.beginPath();
-    ctx.ellipse(cx, eyeY, 24, 31, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx, eyeY + 2, 21, 28, 0, 0, Math.PI * 2);
     ctx.fill();
-    // 虹彩の下側を明るくして透明感を出す
-    ctx.fillStyle = '#f2b354';
+    ctx.fillStyle = '#f6c060';
     ctx.beginPath();
-    ctx.ellipse(cx, eyeY + 12, 15, 12, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx, eyeY + 13, 14, 13, 0, 0, Math.PI * 2);
     ctx.fill();
-    // 瞳孔(小さめにして明るい虹彩を見せる)
-    ctx.fillStyle = '#54350f';
+    // 上まぶたの影(虹彩の上部を暗く。伏し目の柔らかさ)
+    ctx.fillStyle = 'rgba(90, 50, 15, 0.45)';
     ctx.beginPath();
-    ctx.ellipse(cx, eyeY - 2, 8.5, 12, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx, eyeY - 20, 24, 12, 0, 0, Math.PI, true);
     ctx.fill();
-    // 控えめな上まつ毛(上縁に沿う弧)
-    ctx.strokeStyle = '#43301f';
-    ctx.lineWidth = 6;
+    // 瞳孔
+    ctx.fillStyle = '#4a2e0c';
     ctx.beginPath();
-    ctx.ellipse(cx, eyeY, 24, 31, 0, Math.PI * 1.15, Math.PI * 1.85);
+    ctx.ellipse(cx, eyeY + 1, 8, 12, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // 上まつ毛(太いラインで目力を出す。目尻をわずかに跳ね上げ)
+    ctx.strokeStyle = '#3a2a1a';
+    ctx.lineWidth = 9;
+    ctx.beginPath();
+    ctx.ellipse(cx, eyeY, 27, 33, 0, Math.PI * 1.12, Math.PI * 1.88);
     ctx.stroke();
-    // 白いハイライト(大小2つ)
+    // 下まぶた(細く控えめ)
+    ctx.strokeStyle = 'rgba(58, 42, 26, 0.4)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.ellipse(cx, eyeY, 25, 32, 0, Math.PI * 0.25, Math.PI * 0.75);
+    ctx.stroke();
+    // 白いハイライト(左上に大・右下に小。参考絵と同じ配置)
     ctx.fillStyle = '#ffffff';
     ctx.beginPath();
-    ctx.arc(cx - 8, eyeY - 11, 7, 0, Math.PI * 2);
+    ctx.ellipse(cx - 9, eyeY - 10, 8, 9, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.beginPath();
-    ctx.arc(cx + 9, eyeY + 7, 3.5, 0, Math.PI * 2);
+    ctx.arc(cx + 9, eyeY + 10, 4, 0, Math.PI * 2);
     ctx.fill();
+  }
+
+  // 眼鏡(キャラクターシートの太い黒縁・角丸フレーム。瞳の上に重ねる)
+  ctx.strokeStyle = '#2e2823';
+  ctx.lineJoin = 'round';
+  ctx.lineWidth = 10;
+  for (const side of [-1, 1]) {
+    ctx.beginPath();
+    ctx.roundRect(faceX + side * eyeDX - 41, eyeY - 34, 82, 66, 24);
+    ctx.stroke();
+  }
+  // ブリッジ(少し上をわたす)
+  ctx.lineWidth = 6;
+  ctx.beginPath();
+  ctx.moveTo(faceX - 16, eyeY - 14);
+  ctx.quadraticCurveTo(faceX, eyeY - 20, faceX + 16, eyeY - 14);
+  ctx.stroke();
+  // つる(こめかみへ。横髪に隠れる程度)
+  ctx.lineWidth = 5;
+  for (const side of [-1, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(faceX + side * (eyeDX + 41), eyeY - 8);
+    ctx.lineTo(faceX + side * (eyeDX + 78), eyeY - 18);
+    ctx.stroke();
   }
 
   // 小さく穏やかな口
