@@ -173,6 +173,7 @@ export const THEME = {
   skyDawn: PALETTE.skyDawn as number,
   water: PALETTE.water as number,
   sand: PALETTE.sand as number,
+  treeStyle: 'default' as 'default' | 'palm',
 };
 
 /**
@@ -193,6 +194,7 @@ export function setPlanetTheme(planet: number): void {
   if (theme.sky?.dawn !== undefined) THEME.skyDawn = theme.sky.dawn;
   if (theme.water !== undefined) THEME.water = theme.water;
   if (theme.sand !== undefined) THEME.sand = theme.sand;
+  if (theme.treeStyle) THEME.treeStyle = theme.treeStyle;
 }
 
 /**

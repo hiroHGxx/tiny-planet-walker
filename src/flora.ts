@@ -128,6 +128,9 @@ export function createTree(rand: Rand): THREE.Group {
   trunk.position.y = trunkHeight / 2;
   tree.add(trunk);
 
+  // 夏の星はヤシ風の木に切り替わる(星のテーマ)
+  if (THEME.treeStyle === 'palm') return createPalmTree(rand);
+
   // 木の葉色は星のテーマで差し替わる(春=桜、秋=紅葉など)
   const foliageColor =
     THEME.foliage[Math.floor(rand() * THEME.foliage.length)]!;
@@ -179,6 +182,61 @@ export function createTree(rand: Rand): THREE.Group {
   }
 
   tree.scale.setScalar(0.85 + rand() * 0.5);
+  return tree;
+}
+
+/**
+ * ヤシ風の木(なぎさの星用)。
+ * すこし傾いて伸びる細い幹の先に、細長い葉を放射状に広げる。
+ * createTree と同じ「原点が根元」の約束で作るので置き場所は共通でよい
+ */
+function createPalmTree(rand: Rand): THREE.Group {
+  const tree = new THREE.Group();
+  const lean = (rand() - 0.5) * 0.3; // 幹ぜんたいの傾き
+  const segments = 4;
+  const segmentHeight = 0.55 + rand() * 0.1;
+  let topX = 0;
+  let topY = 0;
+  for (let i = 0; i < segments; i++) {
+    const segment = new THREE.Mesh(trunkGeometry, toonMaterial(PALETTE.trunk));
+    segment.scale.set(0.55 - i * 0.06, segmentHeight, 0.55 - i * 0.06);
+    // 上の節ほど傾きを強くして、ゆるいカーブの幹にする
+    const tilt = lean * (i + 1) * 0.45;
+    segment.position.set(topX + Math.sin(tilt) * segmentHeight * 0.5, topY + segmentHeight * 0.45, 0);
+    segment.rotation.z = -tilt;
+    tree.add(segment);
+    topX += Math.sin(tilt) * segmentHeight;
+    topY += Math.cos(tilt) * segmentHeight * 0.92;
+  }
+  // 葉:細長くつぶした球を放射状に。先を垂らして南国らしく
+  const frondColor = THEME.foliage[0]!;
+  const frondSub = THEME.foliage[1] ?? frondColor;
+  const fronds = 6 + Math.floor(rand() * 2);
+  for (let i = 0; i < fronds; i++) {
+    const angle = (i / fronds) * Math.PI * 2 + rand() * 0.4;
+    const frond = new THREE.Mesh(
+      leafGeometry,
+      toonMaterial(i % 2 === 0 ? frondColor : frondSub)
+    );
+    frond.scale.set(0.22, 0.06, 0.95);
+    frond.position.set(
+      topX + Math.cos(angle) * 0.55,
+      topY + 0.08,
+      Math.sin(angle) * 0.55
+    );
+    frond.rotation.y = Math.PI / 2 - angle;
+    frond.rotateX(0.5 + rand() * 0.25); // 先を垂らす
+    tree.add(frond);
+  }
+  // 実(ヤシの実)を2つ
+  for (let i = 0; i < 2; i++) {
+    const nut = new THREE.Mesh(berryGeometry, toonMaterial(PALETTE.door));
+    nut.scale.setScalar(0.09);
+    const angle = rand() * Math.PI * 2;
+    nut.position.set(topX + Math.cos(angle) * 0.16, topY - 0.06, Math.sin(angle) * 0.16);
+    tree.add(nut);
+  }
+  tree.scale.setScalar(0.9 + rand() * 0.45);
   return tree;
 }
 
@@ -503,6 +561,200 @@ export function createMurasakiMushroom(rand: Rand): THREE.Group {
   }
   group.scale.setScalar(0.85 + rand() * 0.4);
   return group;
+}
+
+// --- v3追加の薬草8種(四季の星めぐり・20種化) ---
+
+/** さくら草:桃色の花びらがふんわり開く、はるかぜの星の花 */
+export function createSakuraHerb(rand: Rand): THREE.Group {
+  const herb = new THREE.Group();
+  const height = 0.35 + rand() * 0.15;
+  herb.add(createStem(height));
+  addLeavesAround(herb, rand, 2, height * 0.35, 0.09, 0.15, PALETTE.leaf);
+  for (let i = 0; i < 5; i++) {
+    const angle = (i / 5) * Math.PI * 2;
+    const petal = new THREE.Mesh(leafGeometry, toonMaterial(0xf2b3ce));
+    petal.scale.set(0.055, 0.015, 0.1);
+    petal.position.set(Math.cos(angle) * 0.07, height, Math.sin(angle) * 0.07);
+    petal.rotation.y = Math.PI / 2 - angle;
+    petal.rotateX(-0.2); // 上向きにふんわり開く
+    herb.add(petal);
+  }
+  const center = new THREE.Mesh(berryGeometry, toonMaterial(0xf7dfe8));
+  center.scale.setScalar(0.04);
+  center.position.y = height + 0.01;
+  herb.add(center);
+  herb.scale.setScalar(0.8 + rand() * 0.5);
+  return herb;
+}
+
+/** わかば草:芽吹いたばかりの若葉が2枚ひらく、春いちばんの草 */
+export function createWakabaHerb(rand: Rand): THREE.Group {
+  const herb = new THREE.Group();
+  const height = 0.18 + rand() * 0.08;
+  herb.add(createStem(height));
+  for (let i = 0; i < 2; i++) {
+    const leaf = new THREE.Mesh(leafGeometry, toonMaterial(0x9fd379));
+    leaf.scale.set(0.07, 0.02, 0.14);
+    leaf.position.set(0, height + 0.02, 0);
+    leaf.rotation.y = i * Math.PI + (rand() - 0.5) * 0.4;
+    leaf.rotateX(-0.5); // 空へ向かってひらく
+    herb.add(leaf);
+  }
+  // 葉さきの朝露
+  const dew = new THREE.Mesh(berryGeometry, toonMaterial(0xdfeef7));
+  dew.scale.setScalar(0.025);
+  dew.position.set(0.06, height + 0.08, 0);
+  herb.add(dew);
+  herb.scale.setScalar(0.85 + rand() * 0.45);
+  return herb;
+}
+
+/** しおかぜ草:浜辺で潮風にゆれる細い草。根元に白い貝がら */
+export function createShiokazeHerb(rand: Rand): THREE.Group {
+  const herb = new THREE.Group();
+  const blades = 4 + Math.floor(rand() * 2);
+  for (let i = 0; i < blades; i++) {
+    const angle = (i / blades) * Math.PI * 2 + rand() * 0.7;
+    const blade = new THREE.Mesh(leafGeometry, toonMaterial(0x84bfa2));
+    blade.scale.set(0.03, 0.015, 0.22);
+    blade.position.set(Math.cos(angle) * 0.05, 0.12, Math.sin(angle) * 0.05);
+    blade.rotation.y = Math.PI / 2 - angle;
+    blade.rotateX(-0.9 + rand() * 0.3); // 立ち上がってから外へなびく
+    herb.add(blade);
+  }
+  const shell = new THREE.Mesh(capGeometry, toonMaterial(PALETTE.petal));
+  shell.scale.set(0.05, 0.03, 0.05);
+  shell.position.set(0.08, 0.015, 0.03);
+  herb.add(shell);
+  herb.scale.setScalar(0.85 + rand() * 0.45);
+  return herb;
+}
+
+/** ひまわり草:小さなひまわり。なぎさの星の日ざしを集める */
+export function createHimawariHerb(rand: Rand): THREE.Group {
+  const herb = new THREE.Group();
+  const height = 0.5 + rand() * 0.2;
+  herb.add(createStem(height));
+  addLeavesAround(herb, rand, 2, height * 0.45, 0.1, 0.17, PALETTE.leaf);
+  for (let i = 0; i < 8; i++) {
+    const angle = (i / 8) * Math.PI * 2;
+    const petal = new THREE.Mesh(leafGeometry, toonMaterial(0xf0c53f));
+    petal.scale.set(0.04, 0.012, 0.09);
+    petal.position.set(Math.cos(angle) * 0.09, height, Math.sin(angle) * 0.09);
+    petal.rotation.y = Math.PI / 2 - angle;
+    herb.add(petal);
+  }
+  const face = new THREE.Mesh(berryGeometry, toonMaterial(PALETTE.door));
+  face.scale.set(0.06, 0.035, 0.06);
+  face.position.y = height + 0.01;
+  herb.add(face);
+  herb.scale.setScalar(0.8 + rand() * 0.5);
+  return herb;
+}
+
+/** もみじ茸:紅葉色の傘のきのこ。もみじの星の木かげに生える */
+export function createMomijiMushroom(rand: Rand): THREE.Group {
+  const group = new THREE.Group();
+  const count = 2 + Math.floor(rand() * 2);
+  for (let i = 0; i < count; i++) {
+    const mushroom = new THREE.Group();
+    const stalkHeight = 0.1 + rand() * 0.08;
+    const stalk = new THREE.Mesh(stemGeometry, toonMaterial(PALETTE.petal));
+    stalk.scale.set(1.6, stalkHeight, 1.6);
+    stalk.position.y = stalkHeight / 2;
+    mushroom.add(stalk);
+    const cap = new THREE.Mesh(
+      capGeometry,
+      toonMaterial(i % 2 === 0 ? PALETTE.accentRed : PALETTE.haori, 0x3a1a10)
+    );
+    cap.scale.set(0.09, 0.08, 0.09);
+    cap.position.y = stalkHeight + 0.03;
+    mushroom.add(cap);
+    mushroom.position.set((rand() - 0.5) * 0.16, 0, (rand() - 0.5) * 0.16);
+    group.add(mushroom);
+  }
+  group.scale.setScalar(0.85 + rand() * 0.4);
+  return group;
+}
+
+/** くりの実:いがから顔を出した栗。もみじの星の実り */
+export function createKuriHerb(rand: Rand): THREE.Group {
+  const group = new THREE.Group();
+  const count = 1 + Math.floor(rand() * 2);
+  for (let i = 0; i < count; i++) {
+    const kuri = new THREE.Group();
+    // いが(とげのかたまりに見えるカクカクの球)
+    const burr = new THREE.Mesh(chunkFoliageGeometry, toonMaterial(0xb0a05e));
+    burr.scale.setScalar(0.09);
+    burr.position.y = 0.06;
+    burr.rotation.y = rand() * Math.PI;
+    kuri.add(burr);
+    // 顔を出す実
+    const nut = new THREE.Mesh(berryGeometry, toonMaterial(0x8a5a36));
+    nut.scale.set(0.055, 0.06, 0.055);
+    nut.position.y = 0.12;
+    kuri.add(nut);
+    kuri.position.set((rand() - 0.5) * 0.16, 0, (rand() - 0.5) * 0.16);
+    group.add(kuri);
+  }
+  // 落ち葉をひと枚そえる
+  const leaf = new THREE.Mesh(leafGeometry, toonMaterial(PALETTE.haori));
+  leaf.scale.set(0.06, 0.012, 0.1);
+  leaf.position.set(0.09, 0.012, -0.04);
+  leaf.rotation.y = rand() * Math.PI;
+  group.add(leaf);
+  group.scale.setScalar(0.85 + rand() * 0.4);
+  return group;
+}
+
+/** ゆきわり草:雪のあいだから顔を出す白い小さな花 */
+export function createYukiwariHerb(rand: Rand): THREE.Group {
+  const herb = new THREE.Group();
+  // 根元の小さな雪だまり
+  const mound = new THREE.Mesh(berryGeometry, toonMaterial(0xf2f6f8));
+  mound.scale.set(0.12, 0.04, 0.12);
+  mound.position.y = 0.015;
+  herb.add(mound);
+  const height = 0.16 + rand() * 0.08;
+  herb.add(createStem(height));
+  for (let i = 0; i < 5; i++) {
+    const angle = (i / 5) * Math.PI * 2;
+    const petal = new THREE.Mesh(leafGeometry, toonMaterial(0xfffcf2));
+    petal.scale.set(0.04, 0.012, 0.07);
+    petal.position.set(Math.cos(angle) * 0.05, height, Math.sin(angle) * 0.05);
+    petal.rotation.y = Math.PI / 2 - angle;
+    petal.rotateX(-0.25);
+    herb.add(petal);
+  }
+  const center = new THREE.Mesh(berryGeometry, toonMaterial(PALETTE.flowerCenter));
+  center.scale.setScalar(0.03);
+  center.position.y = height + 0.008;
+  herb.add(center);
+  herb.scale.setScalar(0.85 + rand() * 0.4);
+  return herb;
+}
+
+/** こおり花:氷のように透きとおる青白い花。こなゆきの星の宝物 */
+export function createKooriHerb(rand: Rand): THREE.Group {
+  const herb = new THREE.Group();
+  const height = 0.2 + rand() * 0.1;
+  herb.add(createStem(height));
+  // 結晶のように立ち上がる6枚の花びら
+  for (let i = 0; i < 6; i++) {
+    const angle = (i / 6) * Math.PI * 2;
+    const shard = new THREE.Mesh(capGeometry, toonMaterial(0xbfe0f2, 0x22384a));
+    shard.scale.set(0.035, 0.12, 0.035);
+    shard.position.set(Math.cos(angle) * 0.05, height + 0.05, Math.sin(angle) * 0.05);
+    shard.rotation.set(Math.sin(angle) * 0.5, 0, -Math.cos(angle) * 0.5);
+    herb.add(shard);
+  }
+  const core = new THREE.Mesh(berryGeometry, toonMaterial(0xe8f4fb, 0x334a5a));
+  core.scale.setScalar(0.045);
+  core.position.y = height + 0.05;
+  herb.add(core);
+  herb.scale.setScalar(0.8 + rand() * 0.45);
+  return herb;
 }
 
 /** こがね穂:金色の実が穂になってゆれる、麦のような草 */

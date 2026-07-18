@@ -73,6 +73,8 @@ export interface AmbientAudio {
   setMelodyMode(mode: 'day' | 'night'): void;
   /** 雨音の強さ(0=なし〜1=本降り)。天気の機能が呼ぶ */
   setRainLevel(level: number): void;
+  /** 波音を流すかどうか(なぎさの星)。天気の機能が星の台帳を見て呼ぶ */
+  setWavesEnabled(on: boolean): void;
 }
 
 export function createAmbientAudio(): AmbientAudio {
@@ -83,6 +85,8 @@ export function createAmbientAudio(): AmbientAudio {
   let windFilter: BiquadFilterNode | null = null;
   let rainGain: GainNode | null = null;
   let rainLevel = 0;
+  let wavesGain: GainNode | null = null;
+  let wavesEnabled = false;
   let noiseBuffer: AudioBuffer | null = null;
 
   // メロディの予約状況(次に鳴らす音の開始時刻と、メロディ内の位置)
@@ -164,6 +168,19 @@ export function createAmbientAudio(): AmbientAudio {
     rainGain.gain.value = 0;
     rain.connect(rainFilter).connect(rainGain).connect(master);
     rain.start();
+
+    // 波:雨と同じノイズを低めにならし、ゆっくりした寄せ返しをupdateでつける
+    const waves = context.createBufferSource();
+    waves.buffer = noiseBuffer;
+    waves.loop = true;
+    waves.playbackRate.value = 0.7;
+    const wavesFilter = context.createBiquadFilter();
+    wavesFilter.type = 'lowpass';
+    wavesFilter.frequency.value = 520;
+    wavesGain = context.createGain();
+    wavesGain.gain.value = 0;
+    waves.connect(wavesFilter).connect(wavesGain).connect(master);
+    waves.start();
 
     // BGMのメロディの出口。やわらかい残響(短いディレイの繰り返し)を添える
     melodyOut = context.createGain();
@@ -309,6 +326,14 @@ export function createAmbientAudio(): AmbientAudio {
           (rainLevel * 0.1 - rainGain.gain.value) * (1 - Math.exp(-1.2 * deltaTime));
       }
 
+      // 波音:寄せては返すうねりを、周期ちがいのサイン波2つでつくる
+      if (wavesGain) {
+        const swell = wavesEnabled
+          ? Math.max(0.015, 0.05 + 0.04 * Math.sin(elapsed * 0.45) + 0.02 * Math.sin(elapsed * 0.9 + 1.2))
+          : 0;
+        wavesGain.gain.value += (swell - wavesGain.gain.value) * (1 - Math.exp(-1.5 * deltaTime));
+      }
+
       // 風はメロディの邪魔をしない程度に、ゆっくり強弱をつけてそよがせる
       if (windGain && windFilter) {
         const gust =
@@ -362,6 +387,10 @@ export function createAmbientAudio(): AmbientAudio {
 
     setRainLevel(level: number): void {
       rainLevel = Math.max(0, Math.min(1, level));
+    },
+
+    setWavesEnabled(on: boolean): void {
+      wavesEnabled = on;
     },
   };
 }

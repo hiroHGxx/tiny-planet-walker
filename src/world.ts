@@ -33,6 +33,14 @@ import {
   createStump,
   createLantern,
   createDryingRack,
+  createSakuraHerb,
+  createWakabaHerb,
+  createShiokazeHerb,
+  createHimawariHerb,
+  createMomijiMushroom,
+  createKuriHerb,
+  createYukiwariHerb,
+  createKooriHerb,
 } from './flora.ts';
 import { createShop } from './shop.ts';
 import { Npc } from './npc.ts';
@@ -74,6 +82,14 @@ const HERB_SPECIES_ID = new Map<(rand: Rand) => THREE.Group, string>([
   [createSuzufuriHerb, 'suzufuri'],
   [createMurasakiMushroom, 'murakinoko'],
   [createKoganeHerb, 'kogane'],
+  [createSakuraHerb, 'sakura'],
+  [createWakabaHerb, 'wakaba'],
+  [createShiokazeHerb, 'shiokaze'],
+  [createHimawariHerb, 'himawari'],
+  [createMomijiMushroom, 'momijitake'],
+  [createKuriHerb, 'kuri'],
+  [createYukiwariHerb, 'yukiwari'],
+  [createKooriHerb, 'koori'],
 ]);
 
 import { currentPlanet } from './features/planet-state.ts';
@@ -85,7 +101,9 @@ import { PLANET_HERBS, planetDef } from './content/planets.ts';
  */
 const LAYOUT_ROTATION = new THREE.Quaternion().setFromAxisAngle(
   new THREE.Vector3(0.9, 0.25, 0.35).normalize(),
-  [0, 1.9, 3.9][currentPlanet() - 1] ?? (currentPlanet() - 1) * 1.3
+  // 4=もみじ(旧こもれび)・5=こなゆき(旧しんじゅ)は改装前の角度を引き継ぎ、
+  // 春(2)・夏(3)は新しい角度で地形の並びを変える
+  [0, 2.7, 5.1, 1.9, 3.9][currentPlanet() - 1] ?? (currentPlanet() - 1) * 1.3
 );
 
 /** 再現性のある簡易乱数(毎回同じ配置になるようにする) */
@@ -804,8 +822,22 @@ function addHerbClusters(
     createSuzufuriHerb,
     createMurasakiMushroom,
     createKoganeHerb,
+    createSakuraHerb,
+    createWakabaHerb,
+    createShiokazeHerb,
+    createHimawariHerb,
+    createMomijiMushroom,
+    createKuriHerb,
+    createYukiwariHerb,
+    createKooriHerb,
   ].filter((factory) => available.includes(HERB_SPECIES_ID.get(factory)!));
   for (const center of HERB_CLUSTER_CENTERS) {
+    // 上書きレイアウトの大きな海などに沈む群生地はあきらめる
+    const drowned = LAKES.some(
+      (lake) =>
+        center.angleTo(lake.direction) * PLANET_RADIUS < lake.radius + 1.2
+    );
+    if (drowned) continue;
     const herbCount = 6 + Math.floor(rand() * 3); // 群生ごとに6〜8株
     for (let i = 0; i < herbCount; i++) {
       const factory = herbFactories[Math.floor(rand() * herbFactories.length)]!;

@@ -23,6 +23,9 @@ const RAIN_BOX = { x: 26, y: 16, z: 26 };
 /** 天気の重みの共通デフォルト(いままでの確率と同じ配分) */
 const DEFAULT_WEIGHTS = { sunny: 0.45, cloudy: 0.25, rain: 0.2, fog: 0.1 };
 
+/** 舞う粒(花びら・落ち葉・小雪)の数 */
+const DRIFT_COUNT = 200;
+
 /** 重みにしたがって次の天気を引く(夜は雨・霧を下げて星空を大事にする) */
 function rollWeather(night: boolean): WeatherKind {
   const base = planetDef(currentPlanet()).theme?.weather ?? DEFAULT_WEIGHTS;
@@ -47,7 +50,35 @@ const UP = new THREE.Vector3(0, 1, 0);
 export const weatherFeature: Feature = {
   id: 'weather',
   setup(ctx: FeatureContext): void {
-    const snow = planetDef(currentPlanet()).theme?.snow ?? false;
+    const theme = planetDef(currentPlanet()).theme;
+    const snow = theme?.snow ?? false;
+
+    // --- 舞う粒(春=花びら、秋=落ち葉、冬=小雪)。天気に関係なく常時ちらつく ---
+    let drift: THREE.Points | null = null;
+    let driftGeometry: THREE.BufferGeometry | null = null;
+    if (theme?.drift) {
+      const driftPositions = new Float32Array(DRIFT_COUNT * 3);
+      for (let i = 0; i < DRIFT_COUNT; i++) {
+        driftPositions[i * 3] = (Math.random() - 0.5) * RAIN_BOX.x;
+        driftPositions[i * 3 + 1] = Math.random() * RAIN_BOX.y;
+        driftPositions[i * 3 + 2] = (Math.random() - 0.5) * RAIN_BOX.z;
+      }
+      driftGeometry = new THREE.BufferGeometry();
+      driftGeometry.setAttribute(
+        'position',
+        new THREE.BufferAttribute(driftPositions, 3)
+      );
+      const driftMaterial = new THREE.PointsMaterial({
+        color: theme.drift.color,
+        size: 0.12,
+        transparent: true,
+        opacity: 0.8,
+        depthWrite: false,
+      });
+      drift = new THREE.Points(driftGeometry, driftMaterial);
+      ctx.scene.add(drift);
+    }
+    const waves = theme?.waves ?? false;
     // 雨粒:細い線に見えるよう縦長に散らした点群(雪の星では白く大きめの粒)
     const positions = new Float32Array(RAIN_COUNT * 3);
     for (let i = 0; i < RAIN_COUNT; i++) {
@@ -68,7 +99,17 @@ export const weatherFeature: Feature = {
     rain.visible = false;
     ctx.scene.add(rain);
 
-    weatherState = { kind: 'sunny', timer: 60 + Math.random() * 60, rain, material, geometry, snow };
+    weatherState = {
+      kind: 'sunny',
+      timer: 60 + Math.random() * 60,
+      rain,
+      material,
+      geometry,
+      snow,
+      drift,
+      driftGeometry,
+      waves,
+    };
   },
   update(deltaTime: number, ctx: FeatureContext): void {
     const state = weatherState;
@@ -90,6 +131,8 @@ export const weatherFeature: Feature = {
     // 雪は無音の降りもの(雨音を鳴らさない)
     const rainLevel = state.snow ? 0 : ctx.director.mode === 'planet' ? 1 : 0.35;
     ctx.audio.setRainLevel(state.kind === 'rain' ? rainLevel : 0);
+    // 波音はなぎさの星でだけ(家の中では止める)
+    ctx.audio.setWavesEnabled(state.waves && ctx.director.mode === 'planet');
 
     // 霧はゆっくり出し入れする
     const wantFog = state.kind === 'fog' && ctx.director.mode === 'planet';
@@ -124,10 +167,35 @@ export const weatherFeature: Feature = {
       }
       positions.needsUpdate = true;
     }
+
+    // 舞う粒:プレイヤーに付いていき、ゆらゆら横に流れながらゆっくり落ちる
+    if (state.drift && state.driftGeometry) {
+      const inPlanet = ctx.director.mode === 'planet';
+      state.drift.visible = inPlanet;
+      if (inPlanet) {
+        driftElapsed += deltaTime;
+        _normal.copy(ctx.player.mesh.position).normalize();
+        state.drift.position.copy(ctx.player.mesh.position);
+        _rainQuat.setFromUnitVectors(UP, _normal);
+        state.drift.quaternion.copy(_rainQuat);
+        const positions = state.driftGeometry.attributes.position as THREE.BufferAttribute;
+        const array = positions.array as Float32Array;
+        for (let i = 0; i < DRIFT_COUNT; i++) {
+          let y = array[i * 3 + 1]! - 1.4 * deltaTime;
+          if (y < -2) y += RAIN_BOX.y;
+          array[i * 3 + 1] = y;
+          // 粒ごとに位相をずらした横ゆれ(ひらひら舞って見せる)
+          array[i * 3] += Math.sin(driftElapsed * 1.3 + i * 1.7) * 0.5 * deltaTime;
+          array[i * 3 + 2] += Math.cos(driftElapsed * 1.1 + i * 2.3) * 0.4 * deltaTime;
+        }
+        positions.needsUpdate = true;
+      }
+    }
   },
 };
 
 let daylight = 1;
+let driftElapsed = 0;
 
 let weatherState: {
   kind: WeatherKind;
@@ -137,4 +205,9 @@ let weatherState: {
   geometry: THREE.BufferGeometry;
   /** この星の降りものが雪かどうか(台帳のtheme.snow) */
   snow: boolean;
+  /** 舞う粒(花びら・落ち葉・小雪)。テーマにdriftがない星ではnull */
+  drift: THREE.Points | null;
+  driftGeometry: THREE.BufferGeometry | null;
+  /** 波音を流す星かどうか(台帳のtheme.waves) */
+  waves: boolean;
 } | null = null;
