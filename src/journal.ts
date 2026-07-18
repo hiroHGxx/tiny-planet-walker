@@ -56,6 +56,31 @@ export const HERB_SPECIES: ReadonlyArray<{ id: string; name: string; note: strin
     name: 'つぼみ草',
     note: 'ずっとつぼみのままの草。しずくのなかに朝露をためている。',
   },
+  {
+    id: 'tsukishiro',
+    name: '月しろ草',
+    note: '三日月のかたちの白い花。眠りの薬の大切な材料になる。',
+  },
+  {
+    id: 'akane',
+    name: 'あかね草',
+    note: '夕焼け色の葉が重なる草。体をあたためる塗り薬になる。',
+  },
+  {
+    id: 'suzufuri',
+    name: 'すずふり草',
+    note: '鈴のような花が下向きに咲く。うがい薬にすると喉にやさしい。',
+  },
+  {
+    id: 'murakinoko',
+    name: 'むらさき茸',
+    note: '紫の傘のふしぎなキノコ。少量なら痛み止めになる。',
+  },
+  {
+    id: 'kogane',
+    name: 'こがね穂',
+    note: '金色の実の穂。煮つめると、やさしい甘さの飴になる。',
+  },
 ];
 
 /**
@@ -124,6 +149,38 @@ export const HERB_ICONS: Readonly<Record<string, string>> = {
     <path d="M20 36 V22 M20 30 Q15 28 12 24" fill="none" stroke="#4c7a3d" stroke-width="2.4" stroke-linecap="round"/>
     <path d="M20 6 C13.5 14 14 20 20 22 C26 20 26.5 14 20 6 Z" fill="#d9ef7c"/>
     <circle cx="17.5" cy="13" r="1.6" fill="#f5efd7" opacity="0.9"/>
+  </svg>`,
+  tsukishiro: `<svg viewBox="0 0 40 40">
+    <path d="M20 36 V16" fill="none" stroke="#4c7a3d" stroke-width="2.4" stroke-linecap="round"/>
+    <path d="M25 6 A8.5 8.5 0 1 0 25 19 A6.5 6.5 0 1 1 25 6 Z" fill="#f5efd7"/>
+    <circle cx="27" cy="9" r="1" fill="#f5efd7" opacity="0.7"/>
+  </svg>`,
+  akane: `<svg viewBox="0 0 40 40">
+    <path d="M20 36 V14" fill="none" stroke="#4c7a3d" stroke-width="2.4" stroke-linecap="round"/>
+    <ellipse cx="13" cy="26" rx="6" ry="2.8" fill="#c75b4a" transform="rotate(-18 13 26)"/>
+    <ellipse cx="27" cy="24" rx="6" ry="2.8" fill="#d0763f" transform="rotate(18 27 24)"/>
+    <ellipse cx="14" cy="17" rx="5" ry="2.5" fill="#d0763f" transform="rotate(-22 14 17)"/>
+    <ellipse cx="26" cy="15" rx="5" ry="2.5" fill="#c75b4a" transform="rotate(22 26 15)"/>
+    <ellipse cx="20" cy="9" rx="4" ry="2.4" fill="#c75b4a"/>
+  </svg>`,
+  suzufuri: `<svg viewBox="0 0 40 40">
+    <path d="M14 36 Q13 18 20 10 Q26 6 31 9" fill="none" stroke="#4c7a3d" stroke-width="2.2" stroke-linecap="round"/>
+    <path d="M19 16 L23 16 L24.5 22 Q21 24 17.5 22 Z" fill="#f5efd7"/>
+    <path d="M26 12 L30 12 L31.5 18 Q28 20 24.5 18 Z" fill="#f5efd7"/>
+    <circle cx="21" cy="23.5" r="1.1" fill="#e8c94f"/><circle cx="28" cy="19.5" r="1.1" fill="#e8c94f"/>
+  </svg>`,
+  murakinoko: `<svg viewBox="0 0 40 40">
+    <path d="M17 36 V24 M25 34 V26" fill="none" stroke="#e8e0cc" stroke-width="4" stroke-linecap="round"/>
+    <path d="M8 24 Q17 8 26 24 Z" fill="#9a6fb8"/>
+    <path d="M19 26 Q25 15 31 26 Z" fill="#835a9e"/>
+    <circle cx="14" cy="20" r="1.2" fill="#e6d8f2"/><circle cx="20" cy="17" r="1.2" fill="#e6d8f2"/>
+  </svg>`,
+  kogane: `<svg viewBox="0 0 40 40">
+    <path d="M15 36 Q14 22 16 12 M25 36 Q26 24 24 14" fill="none" stroke="#4c7a3d" stroke-width="2.2" stroke-linecap="round"/>
+    <g fill="#e8c94f">
+      <ellipse cx="16" cy="11" rx="2" ry="3"/><ellipse cx="13" cy="15" rx="2" ry="3"/><ellipse cx="19" cy="15" rx="2" ry="3"/>
+      <ellipse cx="24" cy="13" rx="2" ry="3"/><ellipse cx="21" cy="17" rx="2" ry="3"/><ellipse cx="27" cy="17" rx="2" ry="3"/>
+    </g>
   </svg>`,
 };
 

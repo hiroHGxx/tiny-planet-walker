@@ -160,6 +160,18 @@ export function flatGeometry(geometry: THREE.BufferGeometry): THREE.BufferGeomet
 const grassColorObjects = PALETTE.grass.map((hex) => new THREE.Color(hex));
 
 /**
+ * 星ごとの草地の色合い。世界を作る前に一度だけ呼ぶ。
+ * 0=薬草の星(そのまま)、1=こもれびの星(秋の琥珀寄り)、2=しんじゅの星(淡く白っぽく)
+ */
+export function setPlanetTheme(planetIndex: number): void {
+  const shift = [null, { h: -0.09, s: 0.02, l: 0.015 }, { h: 0.05, s: -0.2, l: 0.09 }][
+    planetIndex
+  ];
+  if (!shift) return;
+  for (const color of grassColorObjects) color.offsetHSL(shift.h, shift.s, shift.l);
+}
+
+/**
  * 球面上の方向から草地の色を決める。
  * 低周波のサイン波を重ねた簡易ノイズで緑のエリアを分ける。
  * 惑星の面の色と草原の草の色の両方がこれを参照するので、

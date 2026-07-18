@@ -15,6 +15,7 @@ import { boardFeature } from './board/index.ts';
 import { gardenFeature } from './garden/index.ts';
 import { idleFeature } from './idle/index.ts';
 import { planetsFeature } from './planets/index.ts';
+import { landmarksFeature } from './landmarks/index.ts';
 
 /**
  * 有効な機能の一覧。ここから1行消せば(importも消して)機能が丸ごと消える。
@@ -38,4 +39,5 @@ export const FEATURES: Feature[] = [
   gardenFeature,
   idleFeature,
   planetsFeature,
+  landmarksFeature,
 ];

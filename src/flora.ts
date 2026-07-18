@@ -424,3 +424,107 @@ export function createDryingRack(rand: Rand): THREE.Group {
   }
   return rack;
 }
+
+// --- v2追加の薬草5種(12種化) ---
+
+/** 月しろ草:夜空色の茎に、白くほのかに光る三日月形の花 */
+export function createTsukishiroHerb(rand: Rand): THREE.Group {
+  const herb = new THREE.Group();
+  const height = 0.3 + rand() * 0.12;
+  herb.add(createStem(height));
+  addLeavesAround(herb, rand, 2, height * 0.3, 0.08, 0.13, PALETTE.leafDark);
+  const moon = new THREE.Mesh(berryGeometry, toonMaterial(PALETTE.petal, 0x6a6a55));
+  moon.scale.set(0.09, 0.05, 0.05);
+  moon.rotation.z = 0.6;
+  moon.position.y = height + 0.08;
+  herb.add(moon);
+  herb.scale.setScalar(0.8 + rand() * 0.5);
+  return herb;
+}
+
+/** あかね草:夕焼け色の葉が段になって重なる、あたたかい色の株 */
+export function createAkaneHerb(rand: Rand): THREE.Group {
+  const herb = new THREE.Group();
+  const height = 0.22 + rand() * 0.1;
+  herb.add(createStem(height));
+  for (let tier = 0; tier < 3; tier++) {
+    addLeavesAround(
+      herb,
+      rand,
+      3,
+      height * (0.35 + tier * 0.3),
+      0.07 - tier * 0.015,
+      0.12 - tier * 0.02,
+      tier === 1 ? PALETTE.haori : PALETTE.accentRed
+    );
+  }
+  herb.scale.setScalar(0.8 + rand() * 0.5);
+  return herb;
+}
+
+/** すずふり草:弓なりの茎から、鈴のような白い花が下向きにさがる */
+export function createSuzufuriHerb(rand: Rand): THREE.Group {
+  const herb = new THREE.Group();
+  const height = 0.3 + rand() * 0.12;
+  herb.add(createStem(height));
+  addLeavesAround(herb, rand, 2, height * 0.25, 0.09, 0.16, PALETTE.leaf);
+  for (let i = 0; i < 3; i++) {
+    const bell = new THREE.Mesh(capGeometry, toonMaterial(PALETTE.petal));
+    bell.scale.set(0.045, 0.06, 0.045);
+    bell.rotation.x = Math.PI; // 下向きの鈴
+    bell.position.set(0.05 + i * 0.055, height + 0.05 - i * 0.045, 0);
+    herb.add(bell);
+  }
+  herb.scale.setScalar(0.8 + rand() * 0.5);
+  return herb;
+}
+
+/** むらさき茸:薬になるふしぎな紫のキノコ(ひと株で1〜2本) */
+export function createMurasakiMushroom(rand: Rand): THREE.Group {
+  const group = new THREE.Group();
+  const count = 1 + Math.floor(rand() * 2);
+  for (let i = 0; i < count; i++) {
+    const mushroom = new THREE.Group();
+    const stalkHeight = 0.12 + rand() * 0.08;
+    const stalk = new THREE.Mesh(stemGeometry, toonMaterial(PALETTE.petal));
+    stalk.scale.set(1.8, stalkHeight, 1.8);
+    stalk.position.y = stalkHeight / 2;
+    mushroom.add(stalk);
+    const cap = new THREE.Mesh(
+      capGeometry,
+      toonMaterial(PALETTE.accentPurple, 0x2a1a3a)
+    );
+    cap.scale.set(0.1, 0.09, 0.1);
+    cap.position.y = stalkHeight + 0.035;
+    mushroom.add(cap);
+    mushroom.position.set((rand() - 0.5) * 0.14, 0, (rand() - 0.5) * 0.14);
+    group.add(mushroom);
+  }
+  group.scale.setScalar(0.85 + rand() * 0.4);
+  return group;
+}
+
+/** こがね穂:金色の実が穂になってゆれる、麦のような草 */
+export function createKoganeHerb(rand: Rand): THREE.Group {
+  const herb = new THREE.Group();
+  const stalks = 3 + Math.floor(rand() * 2);
+  for (let i = 0; i < stalks; i++) {
+    const height = 0.3 + rand() * 0.14;
+    const stalk = createStem(height);
+    stalk.position.set((rand() - 0.5) * 0.1, 0, (rand() - 0.5) * 0.1);
+    stalk.rotation.z = (rand() - 0.5) * 0.3;
+    herb.add(stalk);
+    for (let g = 0; g < 4; g++) {
+      const grain = new THREE.Mesh(berryGeometry, toonMaterial(PALETTE.flowerCenter));
+      grain.scale.set(0.025, 0.04, 0.025);
+      grain.position.set(
+        stalk.position.x + Math.sin(stalk.rotation.z) * height * 0.8,
+        height * 0.78 + g * 0.045,
+        stalk.position.z
+      );
+      herb.add(grain);
+    }
+  }
+  herb.scale.setScalar(0.8 + rand() * 0.5);
+  return herb;
+}

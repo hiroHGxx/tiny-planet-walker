@@ -82,6 +82,12 @@ export const weatherFeature: Feature = {
       ctx.scene.fog = null;
     }
 
+    // くもり・雨の日は昼の光を落とす(なめらかに寄せる)
+    const daylightTarget =
+      state.kind === 'sunny' ? 1 : state.kind === 'fog' ? 0.75 : 0.55;
+    daylight += (daylightTarget - daylight) * (1 - Math.exp(-1.5 * deltaTime));
+    ctx.world.setDaylight(daylight);
+
     // 雨粒:プレイヤーの頭上へ移動し、足元(球の中心方向)へ降らせる
     state.rain.visible = raining;
     const opacityTarget = raining ? 0.55 : 0;
@@ -102,6 +108,8 @@ export const weatherFeature: Feature = {
     }
   },
 };
+
+let daylight = 1;
 
 let weatherState: {
   kind: WeatherKind;

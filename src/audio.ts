@@ -47,12 +47,13 @@ const MELODY_NIGHT: ReadonlyArray<readonly [number, number]> = [
 ];
 
 /** 出来事に添える小さなジングル([MIDIノート, 開始オフセット秒]の列) */
-export type JingleKind = 'discover' | 'pick' | 'quest' | 'craft';
+export type JingleKind = 'discover' | 'pick' | 'quest' | 'craft' | 'bell';
 const JINGLES: Record<JingleKind, ReadonlyArray<readonly [number, number]>> = {
   discover: [[76, 0], [81, 0.12], [84, 0.24]], // 見つけた!(上っていく3音)
   pick: [[84, 0]], // 摘んだ(小さなひと粒)
   quest: [[72, 0], [76, 0.14], [79, 0.28], [84, 0.42]], // 依頼達成のファンファーレ
   craft: [[79, 0], [76, 0.12], [81, 0.24]], // 調合完了(ころんとした3音)
+  bell: [[67, 0], [67, 0.9]], // 朝の鐘(低めの2打)
 };
 
 /** MIDIノート番号を周波数(Hz)にする */

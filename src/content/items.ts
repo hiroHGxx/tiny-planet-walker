@@ -49,6 +49,11 @@ export const POTIONS: ReadonlyArray<ItemDef> = [
   { id: 'syrup_berry', name: 'すずなりシロップ', icon: bottleIcon('#e8c94f', '#c75b4a') },
   { id: 'balm_glow', name: 'ひかりの塗り薬', icon: jarIcon('#d9ef7c') },
   { id: 'drops_bud', name: 'つぼみのしずく', icon: bottleIcon('#9fc9dd', '#4c7a3d') },
+  { id: 'warm_pack', name: 'あったか湿布', icon: jarIcon('#d0763f') },
+  { id: 'moon_tea', name: '月しろのお茶', icon: teaIcon('#cfdcff') },
+  { id: 'akane_balm', name: 'あかねの塗り薬', icon: jarIcon('#c75b4a') },
+  { id: 'suzu_gargle', name: 'すずふりのうがい薬', icon: bottleIcon('#bcd8e6', '#79ad63') },
+  { id: 'kogane_candy', name: 'こがね飴', icon: bottleIcon('#e8c94f', '#a1794f') },
 ];
 
 /** 採取・お手伝いで手に入るもの(薬草・薬以外) */

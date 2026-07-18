@@ -18,6 +18,11 @@ import {
   createSmallFlower,
   createRosetteHerb,
   createBudHerb,
+  createTsukishiroHerb,
+  createAkaneHerb,
+  createSuzufuriHerb,
+  createMurasakiMushroom,
+  createKoganeHerb,
   createPaleMushroomCluster,
   createTree,
   createRock,
@@ -63,6 +68,11 @@ const HERB_SPECIES_ID = new Map<(rand: Rand) => THREE.Group, string>([
   [createSmallFlower, 'smallflower'],
   [createRosetteHerb, 'rosette'],
   [createBudHerb, 'bud'],
+  [createTsukishiroHerb, 'tsukishiro'],
+  [createAkaneHerb, 'akane'],
+  [createSuzufuriHerb, 'suzufuri'],
+  [createMurasakiMushroom, 'murakinoko'],
+  [createKoganeHerb, 'kogane'],
 ]);
 
 /** 再現性のある簡易乱数(毎回同じ配置になるようにする) */
@@ -333,6 +343,8 @@ export interface World {
   npcs: readonly Npc[];
   /** 星に生えている薬草の方向と種類(図鑑の発見判定に使う) */
   herbSightings: readonly HerbSighting[];
+  /** 昼光の強さ(1=快晴)。くもり・雨の日に天気の機能が下げる */
+  setDaylight(factor: number): void;
 }
 
 /**
@@ -345,6 +357,12 @@ export function createWorld(scene: THREE.Scene, planetIndex = 0): World {
   scene.add(createPlanet());
   scene.add(createSky());
   const { sun, fill } = addLights(scene);
+  const baseSunIntensity = sun.intensity;
+  const baseFillIntensity = fill.intensity;
+  const setDaylight = (factor: number) => {
+    sun.intensity = baseSunIntensity * factor;
+    fill.intensity = baseFillIntensity * factor;
+  };
   addStars(scene);
 
   const rand = createRandom(20260714 + planetIndex * 7919);
@@ -554,7 +572,7 @@ export function createWorld(scene: THREE.Scene, planetIndex = 0): World {
     updateShootingStars(time);
   };
 
-  return { update, npcs, herbSightings, wildlife: wildlifeResult.animals };
+  return { update, npcs, herbSightings, wildlife: wildlifeResult.animals, setDaylight };
 }
 
 /**
@@ -757,6 +775,11 @@ function addHerbClusters(
     createSmallFlower,
     createRosetteHerb,
     createBudHerb,
+    createTsukishiroHerb,
+    createAkaneHerb,
+    createSuzufuriHerb,
+    createMurasakiMushroom,
+    createKoganeHerb,
   ];
   for (const center of HERB_CLUSTER_CENTERS) {
     const herbCount = 6 + Math.floor(rand() * 3); // 群生ごとに6〜8株

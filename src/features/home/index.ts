@@ -8,6 +8,7 @@ import { itemIcon, itemName } from '../../content/items.ts';
 import type { Feature, FeatureContext } from '../feature.ts';
 import { addInteractable } from '../interact/index.ts';
 import { getItemCount, grantItem, consumeItems } from '../pouch/index.ts';
+import { starlightCount } from '../quests/index.ts';
 
 /**
  * おえんちゃんの家の中(F7)。
@@ -249,6 +250,50 @@ export const homeFeature: Feature = {
       priority: 8,
       onUse: exit,
     });
+
+    // --- 星あかりのランタン瓶(貯まるほど光の粒が増える) ---
+    const jar = new THREE.Mesh(
+      flatGeometry(new THREE.CylinderGeometry(0.26, 0.3, 0.55, 8)),
+      new THREE.MeshToonMaterial({
+        color: 0xdfe7ff,
+        transparent: true,
+        opacity: 0.35,
+      })
+    );
+    jar.position.set(4.6, 0.28, -0.6);
+    interior.add(jar);
+    let starPoints: THREE.Points | null = null;
+    const refreshJar = () => {
+      if (starPoints) {
+        interior.remove(starPoints);
+        starPoints.geometry.dispose();
+      }
+      const count = Math.min(starlightCount(), 60);
+      if (count === 0) return;
+      const positions = new Float32Array(count * 3);
+      for (let i = 0; i < count; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const radius = Math.random() * 0.2;
+        positions[i * 3] = 4.6 + Math.cos(angle) * radius;
+        positions[i * 3 + 1] = 0.08 + Math.random() * 0.42;
+        positions[i * 3 + 2] = -0.6 + Math.sin(angle) * radius;
+      }
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      starPoints = new THREE.Points(
+        geometry,
+        new THREE.PointsMaterial({
+          color: 0xffe9a8,
+          size: 0.05,
+          transparent: true,
+          opacity: 0.95,
+          depthWrite: false,
+        })
+      );
+      interior.add(starPoints);
+    };
+    refreshJar();
+    ctx.events.on('starlight-changed', refreshJar);
 
     // --- 調合台とレシピ帳 ---
     const panel = document.createElement('div');

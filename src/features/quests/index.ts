@@ -141,8 +141,11 @@ export const questsFeature: Feature = {
     document.body.appendChild(celebrateEl);
 
     // 依頼の定義は章ごとに遅延読み込み(まとめて読まない行儀。設計書§6)
-    void import('../../content/quests/chapter1.ts').then((chapter) => {
-      defs = [...chapter.CHAPTER1];
+    void Promise.all([
+      import('../../content/quests/chapter1.ts'),
+      import('../../content/quests/chapter2.ts'),
+    ]).then(([chapter1, chapter2]) => {
+      defs = [...chapter1.CHAPTER1, ...chapter2.CHAPTER2];
       refreshTracker();
     });
 
