@@ -133,46 +133,120 @@ body {
   border-top: 6px solid rgba(255, 252, 242, 0.95);
 }
 
-/* 薬草図鑑のパネル */
+/* 薬草図鑑のパネル(吹き出しと同じ、生成りの紙の絵本調) */
 #journal-panel {
   display: none;
   position: fixed;
   top: 56px;
   right: 12px;
-  width: min(300px, calc(100vw - 24px));
+  width: min(320px, calc(100vw - 24px));
   max-height: calc(100vh - 80px);
   overflow-y: auto;
   box-sizing: border-box;
-  padding: 12px 14px;
-  color: #dfe7ff;
-  background: rgba(10, 16, 40, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 12px;
+  padding: 14px 16px 10px;
+  color: #4a3a2c;
+  background: rgba(255, 252, 242, 0.96);
+  border: 1px solid rgba(74, 58, 44, 0.3);
+  border-radius: 14px;
+  box-shadow: 0 6px 24px rgba(7, 11, 26, 0.35);
   font-family: system-ui, -apple-system, sans-serif;
   font-size: 13px;
 }
 
 #journal-panel.open {
   display: block;
+  animation: journal-open 0.18s ease-out;
+}
+
+@keyframes journal-open {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.journal-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
 }
 
 .journal-title {
-  font-size: 15px;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.journal-count {
+  font-size: 13px;
   font-weight: 600;
-  margin-bottom: 10px;
+  color: #7a5a36;
+}
+
+/* 見つけた種類の割合を示すバー */
+.journal-progress {
+  height: 6px;
+  margin: 8px 0 6px;
+  border-radius: 999px;
+  background: rgba(74, 58, 44, 0.15);
+  overflow: hidden;
+}
+
+.journal-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #79ad63, #b2d174);
+  transition: width 0.4s ease;
 }
 
 .journal-row {
-  padding: 8px 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 0;
+  border-top: 1px dashed rgba(74, 58, 44, 0.25);
 }
 
-.journal-row.undiscovered {
-  opacity: 0.45;
+.journal-row:first-of-type {
+  border-top: none;
+}
+
+/* 挿絵:丸い草地色の台紙にSVGの株を置く */
+.journal-icon {
+  flex: none;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 35%, #eef3da, #dbe7c4);
+  border: 1px solid rgba(74, 58, 44, 0.2);
+  overflow: hidden;
+}
+
+.journal-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* 未発見:挿絵は影絵にして、姿だけそっとほのめかす */
+.journal-row.undiscovered .journal-icon svg {
+  filter: brightness(0) opacity(0.22);
+}
+
+.journal-row.undiscovered .journal-text {
+  opacity: 0.55;
+}
+
+.journal-text {
+  min-width: 0;
 }
 
 .journal-name {
-  font-weight: 600;
+  font-weight: 700;
   margin-bottom: 2px;
 }
 

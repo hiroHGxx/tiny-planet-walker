@@ -1,6 +1,7 @@
 /**
- * コード生成の環境音(Web Audio API)。
- * 音声ファイルは使わず、風・小鳥・夜の虫の音・足音をすべてノードの合成で作る
+ * コード生成のBGMと環境音(Web Audio API)。
+ * 音声ファイルは使わず、オルゴール風のメロディ・風・小鳥・夜の虫の音・足音を
+ * すべてノードの合成で作る
  * (「すべての形・色・動き・光をコードで作る」という作品の方針に音も合わせる)。
  *
  * ブラウザの自動再生制限があるため、最初のキー入力かポインタ操作で
@@ -9,10 +10,33 @@
  */
 
 const STORAGE_KEY = 'tiny-planet-walker:muted';
-/** 全体の音量(環境音なので控えめにする) */
+/** 全体の音量(静かな星なので控えめにする) */
 const MASTER_LEVEL = 0.5;
 /** 足音の間隔(秒)。プレイヤーの歩行モーションのテンポに合わせる */
 const STEP_INTERVAL = 0.34;
+
+/** メロディの1拍の長さ(秒)。ゆったりした子守唄のテンポ */
+const BEAT = 0.42;
+/**
+ * ループするBGMのメロディ。[MIDIノート番号, 拍数] の並びで、0は休符。
+ * ハ長調ペンタトニック(ドレミソラ)だけで作った、上って下りる単純な節。
+ * 最後まで鳴らすと先頭に戻って無限にループする。
+ */
+const MELODY: ReadonlyArray<readonly [number, number]> = [
+  [76, 1], [79, 1], [81, 2], // ミ ソ ラー
+  [79, 1], [76, 1], [74, 2], // ソ ミ レー
+  [72, 1], [74, 1], [76, 1], [79, 1], // ド レ ミ ソ
+  [74, 3], [0, 1], // レーー(休)
+  [76, 1], [79, 1], [81, 2], // ミ ソ ラー
+  [84, 1], [81, 1], [79, 2], // 高いド ラ ソー
+  [76, 1], [74, 1], [72, 2], // ミ レ ドー
+  [72, 3], [0, 1], // ドーー(休)
+];
+
+/** MIDIノート番号を周波数(Hz)にする */
+function noteToFrequency(midi: number): number {
+  return 440 * 2 ** ((midi - 69) / 12);
+}
 
 export interface AmbientAudio {
   /**
@@ -25,9 +49,14 @@ export interface AmbientAudio {
 export function createAmbientAudio(): AmbientAudio {
   let context: AudioContext | null = null;
   let master: GainNode | null = null;
+  let melodyOut: GainNode | null = null;
   let windGain: GainNode | null = null;
   let windFilter: BiquadFilterNode | null = null;
   let noiseBuffer: AudioBuffer | null = null;
+
+  // メロディの予約状況(次に鳴らす音の開始時刻と、メロディ内の位置)
+  let melodyIndex = 0;
+  let nextNoteTime = 0;
 
   let muted = false;
   try {
@@ -77,7 +106,7 @@ export function createAmbientAudio(): AmbientAudio {
     master.gain.value = 0; // updateの中でフェードインする
     master.connect(context.destination);
 
-    // 風:低音寄りにならしたノイズをローパスに通して流し続ける
+    // 風:低音寄りにならしたノイズをローパスに通して、メロディの下に薄く敷く
     noiseBuffer = createNoiseBuffer(context);
     const wind = context.createBufferSource();
     wind.buffer = noiseBuffer;
@@ -87,12 +116,67 @@ export function createAmbientAudio(): AmbientAudio {
     windFilter.frequency.value = 300;
     windFilter.Q.value = 0.4;
     windGain = context.createGain();
-    windGain.gain.value = 0.4;
+    windGain.gain.value = 0.12;
     wind.connect(windFilter).connect(windGain).connect(master);
     wind.start();
+
+    // BGMのメロディの出口。やわらかい残響(短いディレイの繰り返し)を添える
+    melodyOut = context.createGain();
+    melodyOut.gain.value = 1;
+    melodyOut.connect(master);
+    const echo = context.createDelay(1);
+    echo.delayTime.value = BEAT * 1.5;
+    const echoFeedback = context.createGain();
+    echoFeedback.gain.value = 0.3;
+    const echoTone = context.createBiquadFilter();
+    echoTone.type = 'lowpass';
+    echoTone.frequency.value = 1800;
+    melodyOut.connect(echo);
+    echo.connect(echoTone).connect(echoFeedback).connect(echo);
+    echoFeedback.connect(master);
   };
   window.addEventListener('pointerdown', unlock, { passive: true });
   window.addEventListener('keydown', unlock);
+
+  /** メロディの1音:オルゴール風に、基音+1オクターブ上を重ねて減衰させる */
+  const playMelodyNote = (midi: number, start: number, duration: number) => {
+    if (!context || !melodyOut) return;
+    const frequency = noteToFrequency(midi);
+    const gain = context.createGain();
+    gain.gain.setValueAtTime(0, start);
+    gain.gain.linearRampToValueAtTime(0.055, start + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0005, start + duration + 0.6);
+    gain.connect(melodyOut);
+    const tone = context.createOscillator();
+    tone.type = 'triangle';
+    tone.frequency.value = frequency;
+    const shimmer = context.createOscillator();
+    shimmer.type = 'sine';
+    shimmer.frequency.value = frequency * 2;
+    const shimmerGain = context.createGain();
+    shimmerGain.gain.value = 0.25;
+    tone.connect(gain);
+    shimmer.connect(shimmerGain).connect(gain);
+    const end = start + duration + 0.7;
+    tone.start(start);
+    tone.stop(end);
+    shimmer.start(start);
+    shimmer.stop(end);
+    tone.onended = () => gain.disconnect();
+  };
+
+  /** メロディを少し先まで予約する。ループの終わりまで来たら先頭へ戻る */
+  const scheduleMelody = () => {
+    if (!context) return;
+    // ミュート明けやタブ復帰で予約時刻が過去になっていたら、今から仕切り直す
+    if (nextNoteTime < context.currentTime) nextNoteTime = context.currentTime + 0.2;
+    while (nextNoteTime < context.currentTime + 0.6) {
+      const [midi, beats] = MELODY[melodyIndex]!;
+      if (midi > 0) playMelodyNote(midi, nextNoteTime, beats * BEAT);
+      nextNoteTime += beats * BEAT;
+      melodyIndex = (melodyIndex + 1) % MELODY.length;
+    }
+  };
 
   /** 小鳥のさえずり:短く下がる音を2〜4回。左右にランダムに散らす */
   const birdChirp = () => {
@@ -172,16 +256,19 @@ export function createAmbientAudio(): AmbientAudio {
       const target = muted ? 0 : MASTER_LEVEL;
       master.gain.value += (target - master.gain.value) * (1 - Math.exp(-4 * deltaTime));
 
-      // 風はゆっくり強弱をつけてそよがせる。夜は少し低くこもらせる
+      // 風はメロディの邪魔をしない程度に、ゆっくり強弱をつけてそよがせる
       if (windGain && windFilter) {
         const gust =
-          0.34 + 0.16 * Math.sin(elapsed * 0.31) + 0.1 * Math.sin(elapsed * 0.83 + 1.7);
-        windGain.gain.value = Math.max(0.08, gust);
+          0.1 + 0.05 * Math.sin(elapsed * 0.31) + 0.03 * Math.sin(elapsed * 0.83 + 1.7);
+        windGain.gain.value = Math.max(0.03, gust);
         windFilter.frequency.value =
           300 + 90 * Math.sin(elapsed * 0.17) - (sunElevation < 0 ? 60 : 0);
       }
 
       if (muted || context.state !== 'running') return;
+
+      // BGMのメロディを絶やさないよう、常に少し先まで音を予約しておく
+      scheduleMelody();
 
       // 昼は小鳥、夜は虫の音(どちらも間隔をランダムにゆらす)
       if (sunElevation > 0.12 && elapsed >= nextBirdAt) {
