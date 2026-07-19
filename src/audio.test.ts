@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MELODIES } from './audio.ts';
+import { MELODIES } from './content/melodies.ts';
 import { PLANET_DEFS } from './content/planets.ts';
 
 describe('BGMメロディの台帳', () => {

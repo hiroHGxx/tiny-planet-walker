@@ -8,6 +8,7 @@ import { CHAPTER4 } from '../../content/quests/chapter4.ts';
 import { CHAPTER5 } from '../../content/quests/chapter5.ts';
 import { ITEMS } from '../../content/items.ts';
 import { PLANET_HERBS } from '../../content/planets.ts';
+import { NAMED_NPCS } from '../../content/npcs.ts';
 
 const ALL_CHAPTERS = [...CHAPTER1, ...CHAPTER2, ...CHAPTER3, ...CHAPTER4, ...CHAPTER5];
 
@@ -89,6 +90,40 @@ describe('コンテンツの整合性', () => {
     const recipe = RECIPES[0]!; // ほしばなのお茶(ほしばな2)
     expect(canCraft(recipe, () => 0)).toBe(false);
     expect(canCraft(recipe, () => 2)).toBe(true);
+  });
+
+  it('全依頼の依頼主は名前つき村人の台帳にいる', () => {
+    const npcIds = new Set(NAMED_NPCS.map((npc) => npc.id));
+    for (const quest of ALL_CHAPTERS) {
+      expect(npcIds.has(quest.giver), `${quest.id}の依頼主${quest.giver}`).toBe(true);
+    }
+  });
+
+  it('全依頼の納品物は、どこかの星で採れるか・調合できるか・採取物である', () => {
+    // 依頼主の星に生えていない薬草でも、旅をすれば手に入るならよい(ネネ章の月しろ草など)
+    const growable = new Set(Object.values(PLANET_HERBS).flat());
+    const craftable = new Set(RECIPES.map((recipe) => recipe.result));
+    const gatherable = new Set(['wool', 'water']);
+    for (const quest of ALL_CHAPTERS) {
+      const item = quest.need.item;
+      expect(
+        growable.has(item) || craftable.has(item) || gatherable.has(item),
+        `${quest.id}の${item}は入手手段がない`
+      ).toBe(true);
+    }
+  });
+
+  it('全レシピの材料も、どこかの星で採れるか・採取物である', () => {
+    const growable = new Set(Object.values(PLANET_HERBS).flat());
+    const gatherable = new Set(['wool', 'water']);
+    for (const recipe of RECIPES) {
+      for (const need of recipe.needs) {
+        expect(
+          growable.has(need.item) || gatherable.has(need.item),
+          `${recipe.id}の材料${need.item}は入手手段がない`
+        ).toBe(true);
+      }
+    }
   });
 });
 
