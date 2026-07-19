@@ -60,7 +60,7 @@ export function questConversation(giverId: string): GiverConversation {
   return conversationFor(defs, progress, giverId, getItemCount);
 }
 
-/** 依頼を受ける(talk機能が「うける」で呼ぶ) */
+/** 依頼を受ける(talk機能が「まかせて!」で呼ぶ) */
 export function acceptQuest(quest: QuestDef): void {
   if (!progress.accepted.includes(quest.id)) progress.accepted.push(quest.id);
   save();
@@ -75,7 +75,7 @@ export function completeQuest(quest: QuestDef): boolean {
   save();
   refreshTracker();
   refreshStarlight(true);
-  celebrate(`依頼をはたした! ✨星あかり +${quest.starlight}`);
+  celebrate(`よろこんでもらえた! ✨星あかり +${quest.starlight}`);
   eventsRef?.emit('starlight-changed', { count: progress.starlight });
   return true;
 }

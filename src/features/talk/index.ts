@@ -124,7 +124,7 @@ export const talkFeature: Feature = {
     } | null = null;
     /** 直前に描いたモデル(同じ話者が続く行では再描画を省く) */
     let portraitSource: THREE.Object3D | null = null;
-    const paintPortrait = (mesh: THREE.Object3D, height: number, faceCamera = false) => {
+    const paintPortrait = (mesh: THREE.Object3D, height: number) => {
       if (portraitSource === mesh) return;
       try {
         if (!portrait) {
@@ -147,8 +147,9 @@ export const talkFeature: Feature = {
         const clone = mesh.clone(true);
         clone.position.set(0, 0, 0);
         clone.quaternion.identity();
-        // プレイヤーのモデルは -Z が正面(NPCは +Z)なので、カメラへ向き直す
-        if (faceCamera) clone.rotateY(Math.PI);
+        // プレイヤーも村人も顔テクスチャは -Z が正面(player.ts / npc.ts 参照)。
+        // カメラは +Z 側から写すので、全員かならず振り向かせる
+        clone.rotateY(Math.PI);
         clone.visible = true;
         clone.traverse((child) => (child.visible = true));
         portrait.scene.add(clone);
@@ -178,7 +179,7 @@ export const talkFeature: Feature = {
       textEl.textContent = playerTurn ? raw.slice(1) : raw;
       if (playerTurn) {
         nameRow.textContent = PLAYER_NAME;
-        paintPortrait(ctx.player.mesh, PLAYER_PORTRAIT_HEIGHT, true);
+        paintPortrait(ctx.player.mesh, PLAYER_PORTRAIT_HEIGHT);
       } else if (talking) {
         nameRow.textContent = `${talking.def.name}(${talking.def.title})`;
         paintPortrait(talking.npc.mesh, talking.npc.portraitHeight);
@@ -237,7 +238,7 @@ export const talkFeature: Feature = {
           choices.innerHTML = '';
           const yes = document.createElement('button');
           yes.className = 'talk-choice';
-          yes.textContent = 'うける';
+          yes.textContent = 'まかせて!';
           const no = document.createElement('button');
           no.className = 'talk-choice subtle';
           no.textContent = 'またこんど';

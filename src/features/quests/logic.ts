@@ -11,7 +11,7 @@ export interface QuestDef {
   title: string;
   /** 受ける前の会話 */
   intro: ReadonlyArray<string>;
-  /** 「うける」を選んだときのひとこと */
+  /** 「まかせて!」を選んだときのひとこと */
   accept: string;
   /** 進行中に話しかけたときのひとこと */
   reminder: string;
