@@ -4,7 +4,12 @@ import { RECIPES, canCraft } from '../../content/recipes.ts';
 import { CHAPTER1 } from '../../content/quests/chapter1.ts';
 import { CHAPTER2 } from '../../content/quests/chapter2.ts';
 import { CHAPTER3 } from '../../content/quests/chapter3.ts';
+import { CHAPTER4 } from '../../content/quests/chapter4.ts';
+import { CHAPTER5 } from '../../content/quests/chapter5.ts';
 import { ITEMS } from '../../content/items.ts';
+import { PLANET_HERBS } from '../../content/planets.ts';
+
+const ALL_CHAPTERS = [...CHAPTER1, ...CHAPTER2, ...CHAPTER3, ...CHAPTER4, ...CHAPTER5];
 
 const DEFS: QuestDef[] = [
   {
@@ -65,10 +70,10 @@ describe('コンテンツの整合性', () => {
   const itemIds = new Set(ITEMS.map((item) => item.id));
 
   it('全章の納品物はすべてアイテム台帳にある', () => {
-    for (const quest of [...CHAPTER1, ...CHAPTER2, ...CHAPTER3]) {
+    for (const quest of ALL_CHAPTERS) {
       expect(itemIds.has(quest.need.item), `${quest.id}の${quest.need.item}`).toBe(true);
       if (quest.after) {
-        expect([...CHAPTER1, ...CHAPTER2, ...CHAPTER3].some((q) => q.id === quest.after), `${quest.id}のafter`).toBe(true);
+        expect(ALL_CHAPTERS.some((q) => q.id === quest.after), `${quest.id}のafter`).toBe(true);
       }
     }
   });
@@ -84,5 +89,49 @@ describe('コンテンツの整合性', () => {
     const recipe = RECIPES[0]!; // ほしばなのお茶(ほしばな2)
     expect(canCraft(recipe, () => 0)).toBe(false);
     expect(canCraft(recipe, () => 2)).toBe(true);
+  });
+});
+
+describe('終盤クエスト「四季の薬」', () => {
+  const neneQuests = ALL_CHAPTERS.filter((quest) => quest.giver === 'nene');
+
+  it('nene_4はネネばあの昔ばなし(nene_3)を終えるまで提案されない', () => {
+    const before = { accepted: ['nene_1', 'nene_2'], completed: ['nene_1', 'nene_2'] };
+    expect(conversationFor(neneQuests, before, 'nene', () => 0)).toMatchObject({
+      kind: 'offer',
+      quest: { id: 'nene_3' },
+    });
+    const after = {
+      accepted: ['nene_1', 'nene_2', 'nene_3'],
+      completed: ['nene_1', 'nene_2', 'nene_3'],
+    };
+    expect(conversationFor(neneQuests, after, 'nene', () => 0)).toMatchObject({
+      kind: 'offer',
+      quest: { id: 'nene_4' },
+    });
+  });
+
+  it('四季の薬を持っていれば納品になる', () => {
+    const progress = {
+      accepted: ['nene_1', 'nene_2', 'nene_3', 'nene_4'],
+      completed: ['nene_1', 'nene_2', 'nene_3'],
+    };
+    const countOf = (item: string) => (item === 'shiki_yaku' ? 1 : 0);
+    expect(conversationFor(neneQuests, progress, 'nene', countOf)).toMatchObject({
+      kind: 'deliver',
+      quest: { id: 'nene_4' },
+    });
+  });
+
+  it('レシピの材料は春夏秋冬それぞれの星に生えている', () => {
+    const recipe = RECIPES.find((r) => r.result === 'shiki_yaku')!;
+    const seasonPlanets = [2, 3, 4, 5];
+    expect(recipe.needs.length).toBe(4);
+    for (const [i, need] of recipe.needs.entries()) {
+      expect(
+        PLANET_HERBS[seasonPlanets[i]!]!.includes(need.item),
+        `${need.item}は星${seasonPlanets[i]}に生えるはず`
+      ).toBe(true);
+    }
   });
 });

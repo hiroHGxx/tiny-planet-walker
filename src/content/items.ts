@@ -59,6 +59,21 @@ export const POTIONS: ReadonlyArray<ItemDef> = [
   { id: 'shiokaze_cider', name: 'しおかぜサイダー', icon: bottleIcon('#9fd8e8', '#4fb3d9') },
   { id: 'kuri_kanroni', name: 'くりの甘露煮', icon: jarIcon('#b08968') },
   { id: 'yukidoke_soup', name: 'ゆきどけスープ', icon: teaIcon('#cfe6dc') },
+  // 終盤クエストの薬。瓶の中に四季の色の粒が浮かぶ特別な挿絵
+  {
+    id: 'shiki_yaku',
+    name: '四季の薬',
+    icon: `<svg viewBox="0 0 40 40">
+      <path d="M16 10 H24 V16 Q30 20 30 27 Q30 34 20 34 Q10 34 10 27 Q10 20 16 16 Z" fill="#e8e4d4" opacity="0.55"/>
+      <path d="M12.5 24 Q13 20.5 16.5 18 H23.5 Q27 20.5 27.5 24 Q28 31.5 20 31.5 Q12 31.5 12.5 24 Z" fill="#efe9f6"/>
+      <circle cx="16.5" cy="22.5" r="2" fill="#f2b3ce"/>
+      <circle cx="23.5" cy="22.5" r="2" fill="#e8c94f"/>
+      <circle cx="16.5" cy="27.5" r="2" fill="#d0763f"/>
+      <circle cx="23.5" cy="27.5" r="2" fill="#bcd8e6"/>
+      <rect x="15.5" y="6" width="9" height="5" rx="1.5" fill="#8a76a8"/>
+      <circle cx="14.5" cy="20.5" r="1.2" fill="#ffffff" opacity="0.7"/>
+    </svg>`,
+  },
 ];
 
 /** 採取・お手伝いで手に入るもの(薬草・薬以外) */

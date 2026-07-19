@@ -30,7 +30,7 @@ export interface PlanetTheme {
   drift?: { color: number };
   /** trueで浜辺の波音を流す(なぎさの星) */
   waves?: boolean;
-  /** BGMモード(予約。§7の四季メロディは後続フェーズでaudio.tsに実装する) */
+  /** 昼のBGMメロディ(audio.tsのMELODIES参照。music機能が昼にこれへ切り替える) */
   melody?: 'spring' | 'summer' | 'autumn' | 'winter';
 }
 

@@ -146,12 +146,14 @@ export const questsFeature: Feature = {
       import('../../content/quests/chapter2.ts'),
       import('../../content/quests/chapter3.ts'),
       import('../../content/quests/chapter4.ts'),
-    ]).then(([chapter1, chapter2, chapter3, chapter4]) => {
+      import('../../content/quests/chapter5.ts'),
+    ]).then(([chapter1, chapter2, chapter3, chapter4, chapter5]) => {
       defs = [
         ...chapter1.CHAPTER1,
         ...chapter2.CHAPTER2,
         ...chapter3.CHAPTER3,
         ...chapter4.CHAPTER4,
+        ...chapter5.CHAPTER5,
       ];
       refreshTracker();
     });

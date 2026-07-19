@@ -135,6 +135,18 @@ export const RECIPES: ReadonlyArray<RecipeDef> = [
     ],
     note: 'ゆきわり草とねざし草の、あったかいスープ。ゆっくり年を越すお供に。',
   },
+  // --- 終盤クエスト「四季の薬」(chapter5)。材料は四季の星をめぐって集める ---
+  {
+    id: 'r_shiki_yaku',
+    result: 'shiki_yaku',
+    needs: [
+      { item: 'sakura', count: 1 },
+      { item: 'himawari', count: 1 },
+      { item: 'momijitake', count: 1 },
+      { item: 'yukiwari', count: 1 },
+    ],
+    note: '春夏秋冬の薬草をひとつずつ。四つの季節をとじこめた、薬師の集大成。',
+  },
 ];
 
 /** いまの持ち物でこのレシピを作れるか */
