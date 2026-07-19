@@ -120,7 +120,14 @@ export const questsFeature: Feature = {
   id: 'quests',
   setup(ctx: FeatureContext): void {
     const saved = loadFeatureData<QuestSave>('quests', VERSION);
-    if (saved) progress = saved;
+    // 保存データの形が想定と違っても起動が止まらないように(壊れた項目は既定値へ)
+    if (saved) {
+      progress = {
+        accepted: Array.isArray(saved.accepted) ? saved.accepted : [],
+        completed: Array.isArray(saved.completed) ? saved.completed : [],
+        starlight: typeof saved.starlight === 'number' ? saved.starlight : 0,
+      };
+    }
 
     eventsRef = ctx.events;
     tracker = document.createElement('div');

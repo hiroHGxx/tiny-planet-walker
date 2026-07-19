@@ -5,6 +5,7 @@ import { addInteractable } from '../interact/index.ts';
 import { grantItem } from '../pouch/index.ts';
 import { loadFeatureData, saveFeatureData } from '../save.ts';
 import { currentDay } from '../clock.ts';
+import { currentPlanet } from '../planet-state.ts';
 
 /**
  * 動物とのふれあい(F10)。
@@ -25,13 +26,19 @@ const _projected = new THREE.Vector3();
 export const animalsFeature: Feature = {
   id: 'animals',
   setup(ctx: FeatureContext): void {
+    // 星ごとに別のセーブにする(羊は星ごとに別の個体。indexの流用を防ぐ)
+    const saveKey = `animals-p${currentPlanet()}`;
     const saved = loadFeatureData<{ sheared: Array<{ index: number; day: number }> }>(
-      'animals',
+      saveKey,
       VERSION
     );
-    const sheared = new Map(saved?.sheared.map((entry) => [entry.index, entry.day]) ?? []);
+    const sheared = new Map(
+      Array.isArray(saved?.sheared)
+        ? saved.sheared.map((entry) => [entry.index, entry.day] as const)
+        : []
+    );
     const save = () =>
-      saveFeatureData('animals', VERSION, {
+      saveFeatureData(saveKey, VERSION, {
         sheared: [...sheared.entries()].map(([index, day]) => ({ index, day })),
       });
 

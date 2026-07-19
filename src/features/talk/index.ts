@@ -310,6 +310,7 @@ export const talkFeature: Feature = {
       talking: () => talking,
     };
   },
+
   update(deltaTime: number, ctx: FeatureContext): void {
     if (!talkRuntime) return;
     // 家の中では星のマーカーが画面に残らないよう、レイヤーごと隠す
@@ -391,3 +392,8 @@ let talkRuntime: {
 } | null = null;
 let elapsed = 0;
 let markerCheckTimer = 0;
+
+/** 名前つき村人のNPC本体。夜の生活リズム(schedule)が歩きの調子を揃えるのに使う */
+export function namedNpcs(): readonly Npc[] {
+  return talkRuntime ? talkRuntime.villagers.map((villager) => villager.npc) : [];
+}

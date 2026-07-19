@@ -213,8 +213,12 @@ renderer.setAnimationLoop(() => {
 
     playerDirection.copy(player.mesh.position).normalize();
     currentSunElevation = getSunElevation(playerDirection);
+    speechBubbles.setHidden(false);
     speechBubbles.update(deltaTime, player.mesh.position, currentSunElevation);
     journal.update(deltaTime, playerDirection);
+  } else {
+    // 家の中ではつぶやきの更新が止まるため、凍った吹き出しを画面に残さない
+    speechBubbles.setHidden(true);
   }
 
   // 音は家の中でも続ける(BGM・環境音。昼夜は星にいたときの値を保つ)

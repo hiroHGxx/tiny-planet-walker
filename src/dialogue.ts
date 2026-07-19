@@ -90,6 +90,15 @@ export class SpeechBubbles {
     }));
   }
 
+  /**
+   * レイヤーごと表示/非表示を切り替える。
+   * 家の中(interior)では update が呼ばれず吹き出しが凍ったまま残るため、
+   * シーンを離れるときに隠す(戻れば残り時間から再開する)
+   */
+  setHidden(hidden: boolean): void {
+    this.layer.style.display = hidden ? 'none' : '';
+  }
+
   /** sunElevation はプレイヤー地点での太陽の高さ(1=真昼、-1=真夜中) */
   update(deltaTime: number, playerPosition: THREE.Vector3, sunElevation: number): void {
     _playerDirection.copy(playerPosition).normalize();

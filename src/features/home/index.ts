@@ -268,6 +268,8 @@ export const homeFeature: Feature = {
       if (starPoints) {
         interior.remove(starPoints);
         starPoints.geometry.dispose();
+        (starPoints.material as THREE.Material).dispose();
+        starPoints = null;
       }
       const count = Math.min(starlightCount(), 60);
       if (count === 0) return;

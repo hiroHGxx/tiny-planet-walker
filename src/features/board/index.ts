@@ -63,9 +63,13 @@ function rollErrands(): Errand[] {
 export const boardFeature: Feature = {
   id: 'board',
   setup(ctx: FeatureContext): void {
+    // 星ごとに別のセーブにする(依頼の品はその星の薬草から選ぶため、
+    // 同じ日のまま星を移動しても前の星の依頼が残らないように)
+    const saveKey = `board-p${currentPlanet()}`;
     let state: BoardSave =
-      loadFeatureData<BoardSave>('board', VERSION) ?? { day: 0, errands: [] };
-    const save = () => saveFeatureData('board', VERSION, state);
+      loadFeatureData<BoardSave>(saveKey, VERSION) ?? { day: 0, errands: [] };
+    if (!Array.isArray(state.errands)) state = { day: 0, errands: [] };
+    const save = () => saveFeatureData(saveKey, VERSION, state);
     const rollIfNeeded = () => {
       if (state.day === currentDay() && state.errands.length > 0) return;
       state = { day: currentDay(), errands: rollErrands() };

@@ -1,4 +1,5 @@
 import { loadFeatureData, saveFeatureData } from './save.ts';
+import { PLANET_NUMBERS } from '../content/planets.ts';
 
 /**
  * いまいる星の番号(基盤)。1が最初の「薬草の星」。
@@ -7,8 +8,13 @@ import { loadFeatureData, saveFeatureData } from './save.ts';
  * キー名にも使う。
  */
 
+/** 台帳にある星番号だけを受け付ける(壊れたセーブや未知の番号は星1へ) */
+function sanitize(value: unknown): number {
+  return typeof value === 'number' && PLANET_NUMBERS.includes(value) ? value : 1;
+}
+
 const saved = loadFeatureData<{ planet: number }>('planet', 1);
-const planet = Math.max(1, saved?.planet ?? 1);
+const planet = sanitize(saved?.planet);
 
 export function currentPlanet(): number {
   return planet;
@@ -16,7 +22,7 @@ export function currentPlanet(): number {
 
 /** 次に開く星を保存する(呼んだあと location.reload() すること) */
 export function setPlanet(next: number): void {
-  saveFeatureData('planet', 1, { planet: Math.max(1, next) });
+  saveFeatureData('planet', 1, { planet: sanitize(next) });
 }
 
 const ARRIVING_KEY = 'tiny-planet-walker:arriving';

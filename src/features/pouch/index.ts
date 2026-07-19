@@ -90,7 +90,12 @@ export const pouchFeature: Feature = {
     const saved = loadFeatureData<PouchSave>('pouch', VERSION);
     counts = saved?.counts ?? {};
     const savedPicked = loadFeatureData<PickedSave>(pickedKey(), 1);
-    picked = new Map(savedPicked?.picked.map((entry) => [entry.index, entry.day]) ?? []);
+    // 保存データの形が想定と違っても起動が止まらないように(壊れた分は捨てる)
+    picked = new Map(
+      Array.isArray(savedPicked?.picked)
+        ? savedPicked.picked.map((entry) => [entry.index, entry.day] as const)
+        : []
+    );
 
     anims = [];
     const animByIndex = new Map<number, ScaleAnim>();
