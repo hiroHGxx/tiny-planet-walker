@@ -98,6 +98,43 @@ export const RECIPES: ReadonlyArray<RecipeDef> = [
     ],
     note: 'つぼみ草の朝露を集めた目薬。星を見すぎて疲れた目に。',
   },
+  // --- 季節のごちそう(chapter4の依頼で使う。材料はその季節の星でそろう) ---
+  {
+    id: 'r_sakura_yu',
+    result: 'sakura_yu',
+    needs: [
+      { item: 'sakura', count: 2 },
+      { item: 'water', count: 1 },
+    ],
+    note: 'さくら草の花を浮かべた白湯。ひとくちで、からだに春がくる。',
+  },
+  {
+    id: 'r_shiokaze_cider',
+    result: 'shiokaze_cider',
+    needs: [
+      { item: 'shiokaze', count: 2 },
+      { item: 'berry', count: 1 },
+    ],
+    note: 'しおかぜ草のしゅわしゅわを閉じこめたサイダー。浜風の味がする。',
+  },
+  {
+    id: 'r_kuri_kanroni',
+    result: 'kuri_kanroni',
+    needs: [
+      { item: 'kuri', count: 2 },
+      { item: 'berry', count: 1 },
+    ],
+    note: 'くりの実をすずなりの甘さで煮つめた一品。秋のごほうび。',
+  },
+  {
+    id: 'r_yukidoke_soup',
+    result: 'yukidoke_soup',
+    needs: [
+      { item: 'yukiwari', count: 2 },
+      { item: 'rosette', count: 1 },
+    ],
+    note: 'ゆきわり草とねざし草の、あったかいスープ。ゆっくり年を越すお供に。',
+  },
 ];
 
 /** いまの持ち物でこのレシピを作れるか */

@@ -54,6 +54,11 @@ export const POTIONS: ReadonlyArray<ItemDef> = [
   { id: 'akane_balm', name: 'あかねの塗り薬', icon: jarIcon('#c75b4a') },
   { id: 'suzu_gargle', name: 'すずふりのうがい薬', icon: bottleIcon('#bcd8e6', '#79ad63') },
   { id: 'kogane_candy', name: 'こがね飴', icon: bottleIcon('#e8c94f', '#a1794f') },
+  // 季節の依頼章(chapter4)のごちそう
+  { id: 'sakura_yu', name: 'さくら湯', icon: teaIcon('#f2b3ce') },
+  { id: 'shiokaze_cider', name: 'しおかぜサイダー', icon: bottleIcon('#9fd8e8', '#4fb3d9') },
+  { id: 'kuri_kanroni', name: 'くりの甘露煮', icon: jarIcon('#b08968') },
+  { id: 'yukidoke_soup', name: 'ゆきどけスープ', icon: teaIcon('#cfe6dc') },
 ];
 
 /** 採取・お手伝いで手に入るもの(薬草・薬以外) */
