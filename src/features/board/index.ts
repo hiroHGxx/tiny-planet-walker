@@ -76,7 +76,6 @@ export const boardFeature: Feature = {
       save();
     };
     rollIfNeeded();
-    ctx.events.on('day-passed', rollIfNeeded);
 
     // --- 掲示板の立て看板(最初の村の広場のそば) ---
     const boardDirection = VILLAGE_CENTERS[0]!.clone()
@@ -214,6 +213,13 @@ export const boardFeature: Feature = {
         panel.appendChild(row);
       }
     };
+
+    // 開いたまま日をまたぐと、表示だけ前日のまま残って古いお手伝いに
+    // 納品できてしまうため、貼り替えたら開いているパネルも描き直す
+    ctx.events.on('day-passed', () => {
+      rollIfNeeded();
+      if (panel.classList.contains('open')) refreshPanel();
+    });
 
     addInteractable({
       direction: boardDirection,
