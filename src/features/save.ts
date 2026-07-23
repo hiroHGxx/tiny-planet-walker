@@ -7,6 +7,13 @@
 
 const PREFIX = 'tiny-planet-walker:';
 
+/**
+ * 「はじめから」でセーブを消した後、リロードまでの間の再セーブを止める旗。
+ * 消去→location.reload()の間にpagehideや定期保存(idle等)が走ると
+ * キーが復活してしまうため、消去後は保存を受け付けない。
+ */
+let cleared = false;
+
 export function loadFeatureData<T>(featureId: string, version: number): T | null {
   try {
     const raw = localStorage.getItem(PREFIX + featureId);
@@ -20,6 +27,7 @@ export function loadFeatureData<T>(featureId: string, version: number): T | null
 }
 
 export function saveFeatureData(featureId: string, version: number, data: unknown): void {
+  if (cleared) return;
   try {
     localStorage.setItem(PREFIX + featureId, JSON.stringify({ v: version, data }));
   } catch {
@@ -27,8 +35,9 @@ export function saveFeatureData(featureId: string, version: number, data: unknow
   }
 }
 
-/** 「はじめから」用:この作品のセーブをすべて消す */
+/** 「はじめから」用:この作品のセーブをすべて消す(以後リロードまで保存しない) */
 export function clearAllSaves(): void {
+  cleared = true;
   try {
     const keys: string[] = [];
     for (let i = 0; i < localStorage.length; i++) {
