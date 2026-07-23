@@ -41,6 +41,10 @@ canvas.addEventListener('webglcontextlost', (event) => {
   event.preventDefault();
   showWebGLError();
 });
+// コンテキストが復帰したら(ドライバの一時リセット等)、案内を出しっぱなしにしない
+canvas.addEventListener('webglcontextrestored', () => {
+  document.querySelector('#webgl-error')?.remove();
+});
 
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
