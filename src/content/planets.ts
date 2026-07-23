@@ -67,7 +67,7 @@ const BASE = [
 /**
  * 四季の星めぐり(設計書§7)。
  * 2=春・3=夏は新規、4=秋(旧こもれびの星)・5=冬(旧しんじゅの星)は改装。
- * ※ need は現在デバッグ用に低め(5/8/10/12)。デバッグ後に§7の表(5/15/30/50)へ
+ * need(気球のしきい値)は §7 の表どおり 5/15/30/50。
  */
 export const PLANET_DEFS: Readonly<Record<number, PlanetDef>> = {
   1: {
@@ -90,7 +90,7 @@ export const PLANET_DEFS: Readonly<Record<number, PlanetDef>> = {
   },
   3: {
     name: 'なぎさの星',
-    need: 8,
+    need: 15,
     herbs: [...BASE, 'shiokaze', 'himawari'], // 夏:しおかぜ草・ひまわり草の故郷
     theme: {
       grassShift: { h: -0.01, s: 0.08, l: 0.02 }, // 日ざしの濃い緑
@@ -116,7 +116,7 @@ export const PLANET_DEFS: Readonly<Record<number, PlanetDef>> = {
   },
   4: {
     name: 'もみじの星',
-    need: 10,
+    need: 30,
     // 秋:もみじ茸・くりの実の故郷。あかね草はこの星の生まれ(旧こもれび)。
     // 月しろ草はヒナさんの依頼で使うため秋にも残す(冬と両方に生える)
     herbs: [...BASE, 'akane', 'tsukishiro', 'momijitake', 'kuri'],
@@ -131,7 +131,7 @@ export const PLANET_DEFS: Readonly<Record<number, PlanetDef>> = {
   },
   5: {
     name: 'こなゆきの星',
-    need: 12,
+    need: 50,
     // 冬:ゆきわり草・こおり花の故郷。むらさき茸と月しろ草もここに(旧しんじゅ)
     herbs: [...BASE, 'tsukishiro', 'murakinoko', 'yukiwari', 'koori'],
     theme: {
