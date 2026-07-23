@@ -111,11 +111,13 @@ export const gardenFeature: Feature = {
       stageMeshes.push([sprout, young, bloom]);
 
       // まく(空きマス+種があるとき)
+      // 優先度はドア(8)より上げる。畑3マスはドア判定(半径2.2)の圏内にあるため、
+      // 同じ場所ではドアより畑を優先しないと「たねをまく」が一切出せない
       addInteractable({
         direction,
         radius: 1.4,
         label: 'たねをまく',
-        priority: 5,
+        priority: 9,
         enabled: () => !plots[index] && getItemCount('seed_mix') > 0,
         onUse: () => {
           if (!consumeItems([{ item: 'seed_mix', count: 1 }])) return;
@@ -130,7 +132,7 @@ export const gardenFeature: Feature = {
         direction,
         radius: 1.4,
         label: '摘む',
-        priority: 5,
+        priority: 9,
         enabled: () => {
           const plot = plots[index];
           return !!plot && currentDay() - plot.day >= GROW_DAYS;
